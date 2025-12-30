@@ -119,7 +119,18 @@ if has_chart:
         
         # Get selected palace or default to 5
         palace_num = st.session_state.get("selected_palace", 5)
-        palace = chart["palaces"][palace_num]
+        # Ensure palace_num is int
+        if palace_num is None:
+            palace_num = 5
+        palace_num = int(palace_num)
+        
+        # Get palace data - handle both int and string keys
+        if palace_num in chart["palaces"]:
+            palace = chart["palaces"][palace_num]
+        elif str(palace_num) in chart["palaces"]:
+            palace = chart["palaces"][str(palace_num)]
+        else:
+            palace = chart["palaces"][list(chart["palaces"].keys())[0]]
         
         schema = {
             "schema_version": "3.0",
