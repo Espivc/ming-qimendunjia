@@ -382,18 +382,21 @@ with ctrl_col1:
     )
 
 with ctrl_col2:
+    current_hour = datetime.now(SGT).hour
     chart_hour = st.selectbox(
         "Hour 时",
         options=list(range(0, 24)),
-        index=datetime.now().hour,
+        index=current_hour,
         format_func=lambda x: f"{x:02d}:00"
     )
 
 with ctrl_col3:
+    current_minute = datetime.now(SGT).minute
     chart_minute = st.selectbox(
         "Minute 分",
-        options=[0, 15, 30, 45],
-        index=0
+        options=list(range(0, 60)),
+        index=current_minute,
+        format_func=lambda x: f"{x:02d}"
     )
 
 with ctrl_col4:
