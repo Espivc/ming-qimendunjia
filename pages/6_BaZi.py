@@ -334,8 +334,9 @@ with col2:
         with time_col2:
             birth_minute = st.selectbox(
                 "Minute 分",
-                options=[0, 15, 30, 45],
-                index=0
+                options=list(range(0, 60)),
+                index=0,
+                format_func=lambda x: f"{x:02d}"
             )
     else:
         birth_hour = 12
