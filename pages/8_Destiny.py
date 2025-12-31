@@ -1,11 +1,11 @@
-# Ming QiMenDunJia v8.0 - QMDJ Destiny Analysis (Tiered)
+# Ming QiMenDunJia v8.0 - QMDJ Destiny Analysis (Hybrid)
 # pages/8_Destiny.py
 """
-QI MEN DESTINY ANALYSIS (奇门命盘) - QUICK TIER
+QI MEN DESTINY ANALYSIS (奇门命盘) - HYBRID
 
-Show your birth chart QMDJ components.
-- Shows WHAT (Star, Door, Deity, Palace)
-- For WHY (full interpretation), export to Project 1 (AI Analyst)
+Your birth chart in Qi Men Dun Jia system.
+- Shows useful insights (component meanings, brief archetypes)
+- "Analyze with AI" button for full personalized reading
 """
 
 import streamlit as st
@@ -27,12 +27,6 @@ try:
     IMPORTS_OK = True
 except ImportError:
     IMPORTS_OK = False
-    NINE_STARS = {"天蓬": "Canopy", "天芮": "Grass", "天冲": "Impulse", "天辅": "Assistant",
-                  "天禽": "Connect", "天心": "Heart", "天柱": "Pillar", "天任": "Ren", "天英": "Hero"}
-    EIGHT_DOORS = {"开门": "Open", "休门": "Rest", "生门": "Life", "伤门": "Harm",
-                   "杜门": "Delusion", "景门": "Scenery", "死门": "Death", "惊门": "Fear"}
-    EIGHT_DEITIES = {"值符": "Chief", "腾蛇": "Serpent", "太阴": "Moon", "六合": "Six Harmony",
-                     "勾陈": "Hook", "白虎": "Tiger", "玄武": "Emptiness", "九地": "Nine Earth", "九天": "Nine Heaven"}
 
 
 # =============================================================================
@@ -55,85 +49,171 @@ st.markdown("""
         padding: 20px;
         margin: 10px 0;
     }
-    .component-box {
+    .component-card {
         background: #1a2744;
-        border-radius: 8px;
-        padding: 15px;
-        text-align: center;
+        border-radius: 10px;
+        padding: 18px;
         border: 1px solid #2d3748;
-        margin: 5px;
+        margin: 8px 0;
     }
-    .component-star { border-color: #f6e05e; }
-    .component-door { border-color: #48bb78; }
-    .component-deity { border-color: #9f7aea; }
+    .component-star { border-left: 4px solid #f6e05e; }
+    .component-door { border-left: 4px solid #48bb78; }
+    .component-deity { border-left: 4px solid #9f7aea; }
     .palace-cell {
         background: #1a2744;
         border-radius: 8px;
         padding: 10px;
         text-align: center;
         border: 1px solid #2d3748;
-        min-height: 80px;
+        min-height: 70px;
     }
     .palace-birth {
         border: 2px solid #FFD700 !important;
         background: linear-gradient(135deg, #2d3748 0%, #1a2744 100%);
     }
+    .trait-tag {
+        display: inline-block;
+        background: #2d3748;
+        padding: 4px 10px;
+        border-radius: 15px;
+        margin: 3px;
+        font-size: 0.85em;
+    }
+    .trait-good { background: #1a3728; color: #48bb78; }
+    .trait-challenge { background: #371a1a; color: #f56565; }
 </style>
 """, unsafe_allow_html=True)
 
 
 # =============================================================================
-# BRIEF LABELS (Not full interpretations)
+# COMPONENT DATA (Brief insights, not full interpretations)
 # =============================================================================
 
-STAR_LABELS = {
-    "Canopy": ("天蓬", "Water", "Strategist"),
-    "Grass": ("天芮", "Earth", "Healer"),
-    "Impulse": ("天冲", "Wood", "Pioneer"),
-    "Assistant": ("天辅", "Wood", "Scholar"),
-    "Connect": ("天禽", "Earth", "Connector"),
-    "Heart": ("天心", "Metal", "Authority"),
-    "Pillar": ("天柱", "Metal", "Critic"),
-    "Ren": ("天任", "Earth", "Diplomat"),
-    "Hero": ("天英", "Fire", "Performer")
+STAR_DATA = {
+    "Canopy": {
+        "chinese": "天蓬", "element": "Water", "archetype": "The Strategist",
+        "brief": "Strategic mind, resourceful, works behind the scenes",
+        "strengths": ["Strategic thinking", "Adaptability", "Intuition"],
+        "challenges": ["Trust issues", "Secrecy tendency"]
+    },
+    "Grass": {
+        "chinese": "天芮", "element": "Earth", "archetype": "The Healer",
+        "brief": "Caring nature, patient, drawn to helping professions",
+        "strengths": ["Nurturing", "Medical intuition", "Patience"],
+        "challenges": ["Health sensitivity", "Over-giving"]
+    },
+    "Impulse": {
+        "chinese": "天冲", "element": "Wood", "archetype": "The Pioneer",
+        "brief": "Courageous, takes initiative, natural leader",
+        "strengths": ["Courage", "Initiative", "Athletic ability"],
+        "challenges": ["Impatience", "Injury-prone"]
+    },
+    "Assistant": {
+        "chinese": "天辅", "element": "Wood", "archetype": "The Scholar",
+        "brief": "Wise, excellent teacher, diplomatic advisor",
+        "strengths": ["Wisdom", "Teaching ability", "Diplomacy"],
+        "challenges": ["Overthinking", "Indecision"]
+    },
+    "Connect": {
+        "chinese": "天禽", "element": "Earth", "archetype": "The Connector",
+        "brief": "Versatile, connects people and ideas, central role",
+        "strengths": ["Versatility", "Networking", "Balance"],
+        "challenges": ["Scattered energy", "Identity confusion"]
+    },
+    "Heart": {
+        "chinese": "天心", "element": "Metal", "archetype": "The Authority",
+        "brief": "Precise, authoritative, skilled problem-solver",
+        "strengths": ["Precision", "Authority", "Technical skill"],
+        "challenges": ["Over-analytical", "Coldness"]
+    },
+    "Pillar": {
+        "chinese": "天柱", "element": "Metal", "archetype": "The Critic",
+        "brief": "Sharp insight, truth-seeker, independent thinker",
+        "strengths": ["Discernment", "Independence", "Truth-seeking"],
+        "challenges": ["Harsh criticism", "Isolation"]
+    },
+    "Ren": {
+        "chinese": "天任", "element": "Earth", "archetype": "The Diplomat",
+        "brief": "Stable, trustworthy, builds lasting foundations",
+        "strengths": ["Stability", "Trustworthiness", "Diplomacy"],
+        "challenges": ["Stubbornness", "Slow adaptation"]
+    },
+    "Hero": {
+        "chinese": "天英", "element": "Fire", "archetype": "The Performer",
+        "brief": "Creative, charismatic, born to inspire others",
+        "strengths": ["Creativity", "Charisma", "Expression"],
+        "challenges": ["Attention-seeking", "Drama"]
+    }
 }
 
-DOOR_LABELS = {
-    "Open": ("开门", "Metal", "Leadership"),
-    "Rest": ("休门", "Water", "Prosperity"),
-    "Life": ("生门", "Earth", "Creation"),
-    "Harm": ("伤门", "Wood", "Competition"),
-    "Delusion": ("杜门", "Wood", "Strategy"),
-    "Scenery": ("景门", "Fire", "Recognition"),
-    "Death": ("死门", "Earth", "Transformation"),
-    "Fear": ("惊门", "Metal", "Awareness")
+DOOR_DATA = {
+    "Open": {
+        "chinese": "开门", "element": "Metal", "theme": "Leadership & Authority",
+        "brief": "Opens doors for self and others, natural authority",
+        "gifts": ["Natural authority", "Career success", "Opening opportunities"]
+    },
+    "Rest": {
+        "chinese": "休门", "element": "Water", "theme": "Prosperity & Ease",
+        "brief": "Attracts wealth through relationships and timing",
+        "gifts": ["Attracting wealth", "Networking", "Strategic timing"]
+    },
+    "Life": {
+        "chinese": "生门", "element": "Earth", "theme": "Creation & Growth",
+        "brief": "Natural creator, business sense, builds abundance",
+        "gifts": ["Wealth creation", "Business acumen", "Nurturing growth"]
+    },
+    "Harm": {
+        "chinese": "伤门", "element": "Wood", "theme": "Competition & Transformation",
+        "brief": "Grows through challenges, competitive spirit",
+        "gifts": ["Competitive drive", "Breakthrough power", "Transformation"]
+    },
+    "Delusion": {
+        "chinese": "杜门", "element": "Wood", "theme": "Strategy & Secrets",
+        "brief": "Works best behind scenes, strategic mind",
+        "gifts": ["Strategic thinking", "Secret-keeping", "Hidden influence"]
+    },
+    "Scenery": {
+        "chinese": "景门", "element": "Fire", "theme": "Recognition & Expression",
+        "brief": "Meant to be seen, artistic expression, fame potential",
+        "gifts": ["Public recognition", "Artistic expression", "Visibility"]
+    },
+    "Death": {
+        "chinese": "死门", "element": "Earth", "theme": "Transformation & Endings",
+        "brief": "Masters endings and transitions, deep transformer",
+        "gifts": ["Completing cycles", "Major transitions", "Deep wisdom"]
+    },
+    "Fear": {
+        "chinese": "惊门", "element": "Metal", "theme": "Awareness & Protection",
+        "brief": "Heightened awareness, protective instincts, legal mind",
+        "gifts": ["Heightened awareness", "Legal mind", "Protection"]
+    }
 }
 
-DEITY_LABELS = {
-    "Chief": ("值符", "Authority backing"),
-    "Serpent": ("腾蛇", "Mystical perception"),
-    "Moon": ("太阴", "Hidden support"),
-    "Six Harmony": ("六合", "Relationship blessing"),
-    "Hook": ("勾陈", "Grounding force"),
-    "Tiger": ("白虎", "Protection power"),
-    "Emptiness": ("玄武", "Hidden wisdom"),
-    "Nine Earth": ("九地", "Deep stability"),
-    "Nine Heaven": ("九天", "Upward energy")
+DEITY_DATA = {
+    "Chief": {"chinese": "值符", "brief": "Authority backing, people follow you naturally"},
+    "Serpent": {"chinese": "腾蛇", "brief": "Mystical perception, strong intuition and dreams"},
+    "Moon": {"chinese": "太阴", "brief": "Hidden support, benefactors work behind scenes"},
+    "Six Harmony": {"chinese": "六合", "brief": "Relationship blessing, harmonious connections"},
+    "Hook": {"chinese": "勾陈", "brief": "Grounding force, stability in chaos"},
+    "Tiger": {"chinese": "白虎", "brief": "Fierce protection, competitive edge"},
+    "Emptiness": {"chinese": "玄武", "brief": "Hidden wisdom, unconventional paths"},
+    "Nine Earth": {"chinese": "九地", "brief": "Deep grounding, patience, foundation building"},
+    "Nine Heaven": {"chinese": "九天", "brief": "Upward energy, ambition, high aspirations"}
 }
 
-PALACE_NAMES = {
-    1: ("Kan 坎", "North", "Water"),
-    2: ("Kun 坤", "Southwest", "Earth"),
-    3: ("Zhen 震", "East", "Wood"),
-    4: ("Xun 巽", "Southeast", "Wood"),
-    5: ("Center 中", "Center", "Earth"),
-    6: ("Qian 乾", "Northwest", "Metal"),
-    7: ("Dui 兑", "West", "Metal"),
-    8: ("Gen 艮", "Northeast", "Earth"),
-    9: ("Li 离", "South", "Fire")
+PALACE_DATA = {
+    1: ("Kan 坎", "North", "Water", "Career, wisdom, flow"),
+    2: ("Kun 坤", "Southwest", "Earth", "Relationships, nurturing"),
+    3: ("Zhen 震", "East", "Wood", "Action, new beginnings"),
+    4: ("Xun 巽", "Southeast", "Wood", "Wealth, growth, wind"),
+    5: ("Center 中", "Center", "Earth", "Balance, health, core"),
+    6: ("Qian 乾", "Northwest", "Metal", "Authority, leadership"),
+    7: ("Dui 兑", "West", "Metal", "Joy, communication"),
+    8: ("Gen 艮", "Northeast", "Earth", "Knowledge, stability"),
+    9: ("Li 离", "South", "Fire", "Fame, recognition, clarity")
 }
 
-# Hour branch to palace mapping (Luo Shu)
+# Hour branch to palace mapping
 BRANCH_TO_PALACE = {
     "Zi": 1, "Chou": 8, "Yin": 8, "Mao": 3,
     "Chen": 4, "Si": 4, "Wu": 9, "Wei": 2,
@@ -142,49 +222,34 @@ BRANCH_TO_PALACE = {
 
 
 # =============================================================================
-# CALCULATION FUNCTIONS
+# CALCULATION
 # =============================================================================
 
-def get_birth_palace(birth_dt: datetime) -> int:
-    """Get birth palace from hour branch."""
-    hour = birth_dt.hour
-    
-    # Map hour to branch
+def get_hour_branch(hour: int) -> str:
+    """Get earthly branch from hour."""
     branches = ["Zi", "Chou", "Yin", "Mao", "Chen", "Si", 
                 "Wu", "Wei", "Shen", "You", "Xu", "Hai"]
-    
     if hour == 23:
-        branch = "Zi"
-    else:
-        branch_idx = (hour + 1) // 2
-        branch = branches[branch_idx % 12]
-    
-    return BRANCH_TO_PALACE.get(branch, 5)
+        return "Zi"
+    return branches[(hour + 1) // 2 % 12]
 
 
-def calculate_destiny_chart(birth_dt: datetime) -> dict:
-    """Calculate QMDJ destiny chart for birth time."""
+def calculate_destiny(birth_dt: datetime) -> dict:
+    """Calculate QMDJ destiny chart."""
     if not IMPORTS_OK:
-        # Demo data
         return {
-            "palace": 6,
-            "star": "Heart",
-            "door": "Open",
-            "deity": "Chief",
-            "heaven_stem": "Geng",
-            "earth_stem": "Xin",
-            "formations": [],
-            "formation_score": 0
+            "palace": 6, "star": "Heart", "door": "Open", "deity": "Chief",
+            "heaven_stem": "Geng", "earth_stem": "Xin",
+            "formations": [], "formation_score": 0
         }
     
     try:
-        # Generate chart for birth time
         chart = generate_qmdj_chart(birth_dt)
-        birth_palace = get_birth_palace(birth_dt)
+        hour_branch = get_hour_branch(birth_dt.hour)
+        birth_palace = BRANCH_TO_PALACE.get(hour_branch, 5)
         
         palace_data = chart.get("palaces", {}).get(str(birth_palace), {})
         
-        # Detect formations
         formations = detect_formations(palace_data)
         f_score, _ = get_formation_score(formations)
         
@@ -195,53 +260,88 @@ def calculate_destiny_chart(birth_dt: datetime) -> dict:
             "deity": palace_data.get("deity", "Unknown"),
             "heaven_stem": palace_data.get("heaven_stem", "?"),
             "earth_stem": palace_data.get("earth_stem", "?"),
-            "formations": [f.name for f in formations],
+            "formations": [{"name": f.name, "category": f.category.value} for f in formations],
             "formation_score": f_score,
-            "full_chart": chart
+            "chart": chart
         }
     except Exception as e:
         return {"error": str(e)}
 
 
 # =============================================================================
-# EXPORT FOR PROJECT 1
+# AI PROMPT GENERATOR
 # =============================================================================
 
-def generate_export_data(birth_info: dict, destiny: dict, user_bazi: dict = None) -> dict:
-    """Generate JSON for Project 1 (AI Analyst) full interpretation."""
-    return {
-        "analysis_type": "QMDJ_DESTINY",
-        "birth_info": birth_info,
-        "destiny_components": {
-            "palace": {
-                "number": destiny["palace"],
-                "name": PALACE_NAMES.get(destiny["palace"], ("?", "?", "?"))[0],
-                "direction": PALACE_NAMES.get(destiny["palace"], ("?", "?", "?"))[1],
-                "element": PALACE_NAMES.get(destiny["palace"], ("?", "?", "?"))[2]
-            },
-            "natal_star": {
-                "name": destiny["star"],
-                "chinese": STAR_LABELS.get(destiny["star"], ("?", "?", "?"))[0],
-                "element": STAR_LABELS.get(destiny["star"], ("?", "?", "?"))[1]
-            },
-            "natal_door": {
-                "name": destiny["door"],
-                "chinese": DOOR_LABELS.get(destiny["door"], ("?", "?", "?"))[0],
-                "element": DOOR_LABELS.get(destiny["door"], ("?", "?", "?"))[1]
-            },
-            "natal_deity": {
-                "name": destiny["deity"],
-                "chinese": DEITY_LABELS.get(destiny["deity"], ("?", "?"))[0]
-            },
-            "stems": {
-                "heaven": destiny.get("heaven_stem", "?"),
-                "earth": destiny.get("earth_stem", "?")
-            },
-            "formations": destiny.get("formations", [])
-        },
-        "user_bazi": user_bazi,
-        "instruction": "Provide a complete QMDJ Destiny reading for this birth chart. Explain the natal Star archetype, Door life theme, and Deity blessing. Discuss how these components interact. If BaZi is provided, compare and contrast the two systems' insights. Include life path guidance and potential challenges."
-    }
+def generate_ai_prompt(birth_info: dict, destiny: dict, user_bazi: dict = None) -> str:
+    """Generate a ready-to-paste prompt for full reading."""
+    
+    star_data = STAR_DATA.get(destiny['star'], {})
+    door_data = DOOR_DATA.get(destiny['door'], {})
+    deity_data = DEITY_DATA.get(destiny['deity'], {})
+    palace_info = PALACE_DATA.get(destiny['palace'], ("?", "?", "?", "?"))
+    
+    formations_text = ""
+    if destiny.get('formations'):
+        formations_text = "\n**Natal Formations:**\n" + "\n".join([
+            f"- {f['name']} ({f['category']})" for f in destiny['formations']
+        ])
+    
+    bazi_text = ""
+    if user_bazi:
+        bazi_text = f"""
+**User's BaZi Profile (for comparison):**
+- Day Master: {user_bazi.get('day_master', '?')} ({user_bazi.get('element', '?')})
+- Strength: {user_bazi.get('strength', '?')}
+- Useful Gods: {', '.join(user_bazi.get('useful_gods', []))}
+- Ten God Profile: {user_bazi.get('profile', '?')}
+"""
+    
+    prompt = f"""Provide a complete Qi Men Dun Jia Destiny reading for this birth chart:
+
+**Birth Information:**
+- Date: {birth_info['date']}
+- Time: {birth_info['time']}
+- Timezone: {birth_info.get('timezone', 'Asia/Singapore')}
+
+**Birth Palace:** Palace {destiny['palace']} - {palace_info[0]}
+- Direction: {palace_info[1]}
+- Element: {palace_info[2]}
+- Theme: {palace_info[3]}
+
+**Natal Star:** {destiny['star']} ({star_data.get('chinese', '?')})
+- Element: {star_data.get('element', '?')}
+- Archetype: {star_data.get('archetype', '?')}
+
+**Natal Door:** {destiny['door']} ({door_data.get('chinese', '?')})
+- Element: {door_data.get('element', '?')}
+- Life Theme: {door_data.get('theme', '?')}
+
+**Natal Deity:** {destiny['deity']} ({deity_data.get('chinese', '?')})
+
+**Stems:** Heaven {destiny.get('heaven_stem', '?')} / Earth {destiny.get('earth_stem', '?')}
+{formations_text}
+{bazi_text}
+---
+
+Please provide a comprehensive reading including:
+
+1. **Natal Star Analysis** - What does {destiny['star']} Star reveal about core personality, natural talents, and life approach? What is the archetype in depth?
+
+2. **Natal Door Analysis** - How does {destiny['door']} Door shape life opportunities and challenges? What is the life theme?
+
+3. **Natal Deity Analysis** - What spiritual backing or energy pattern does {destiny['deity']} provide?
+
+4. **Component Interactions** - How do the Star, Door, and Deity work together? Any notable combinations?
+
+5. **Life Path Guidance** - Based on this chart, what are the key life lessons, optimal career paths, and areas to develop?
+
+6. **Challenges to Navigate** - What potential pitfalls should be aware of based on this configuration?
+
+{"7. **BaZi Comparison** - How does this QMDJ destiny complement or contrast with the BaZi profile? What insights emerge from combining both systems?" if user_bazi else ""}
+
+Make the reading personal and actionable, not generic."""
+
+    return prompt
 
 
 # =============================================================================
@@ -250,14 +350,11 @@ def generate_export_data(birth_info: dict, destiny: dict, user_bazi: dict = None
 
 def main():
     st.title("⭐ QMDJ Destiny Analysis")
-    st.caption("Your birth chart in Qi Men Dun Jia • Export for full reading")
+    st.caption("Your Qi Men birth chart • Get AI-powered full reading")
     
-    # Sidebar - Birth info input
+    # Sidebar
     with st.sidebar:
         st.header("🎂 Birth Information")
-        
-        # Check if we have saved birth info
-        saved_profile = st.session_state.get("user_profile", {})
         
         birth_date = st.date_input(
             "Birth Date",
@@ -274,196 +371,249 @@ def main():
         
         st.divider()
         
-        # Show BaZi if available
+        # BaZi profile
+        saved_profile = st.session_state.get("user_profile", None)
         if saved_profile:
             st.success(f"🎴 BaZi: {saved_profile.get('day_master', '?')} Day Master")
-            st.caption(f"Useful: {', '.join(saved_profile.get('useful_gods', []))}")
         
         st.divider()
         analyze_btn = st.button("🔮 Reveal Destiny", type="primary", use_container_width=True)
     
     # Main content
     if analyze_btn:
-        # Create birth datetime
         tz = pytz.timezone('Asia/Singapore')
         birth_dt = tz.localize(datetime.combine(birth_date, datetime.min.time().replace(hour=birth_hour, minute=birth_minute)))
         
-        # Calculate destiny
-        destiny = calculate_destiny_chart(birth_dt)
+        destiny = calculate_destiny(birth_dt)
         
         if "error" in destiny:
             st.error(f"Calculation error: {destiny['error']}")
             return
         
-        # Birth Info Summary
+        # Store for AI prompt
+        st.session_state.destiny_result = {
+            "birth_info": {
+                "date": birth_date.strftime("%Y-%m-%d"),
+                "time": f"{birth_hour:02d}:{birth_minute:02d}",
+                "timezone": "Asia/Singapore (UTC+8)"
+            },
+            "destiny": destiny,
+            "profile": saved_profile
+        }
+        
+        # Birth Summary Card
+        palace_info = PALACE_DATA[destiny['palace']]
         st.markdown(f"""
         <div class="destiny-card">
-            <div style="color: #9f7aea; font-size: 0.9em;">BIRTH CHART</div>
-            <div style="color: #fff; font-size: 1.3em; margin: 5px 0;">
+            <div style="color: #9f7aea; font-size: 0.9em;">YOUR QI MEN BIRTH CHART</div>
+            <div style="color: #fff; font-size: 1.2em; margin: 8px 0;">
                 {birth_date.strftime('%B %d, %Y')} at {birth_hour:02d}:{birth_minute:02d}
             </div>
-            <div style="color: #FFD700;">
-                Palace {destiny['palace']} • {PALACE_NAMES[destiny['palace']][0]} • {PALACE_NAMES[destiny['palace']][1]}
+            <div style="color: #FFD700; font-size: 1.1em;">
+                Palace {destiny['palace']} • {palace_info[0]} • {palace_info[1]}
+            </div>
+            <div style="color: #718096; font-size: 0.9em; margin-top: 5px;">
+                {palace_info[2]} Element • {palace_info[3]}
             </div>
         </div>
         """, unsafe_allow_html=True)
         
-        # 9 Palace Grid showing birth palace
+        # 9 Palace Grid
         st.subheader("🏯 Birth Palace Position")
         
-        grid = [
-            [4, 9, 2],
-            [3, 5, 7],
-            [8, 1, 6]
-        ]
+        grid = [[4, 9, 2], [3, 5, 7], [8, 1, 6]]
         
         for row in grid:
             cols = st.columns(3)
-            for idx, palace_num in enumerate(row):
+            for idx, p_num in enumerate(row):
                 with cols[idx]:
-                    is_birth = palace_num == destiny["palace"]
-                    p_name, p_dir, p_elem = PALACE_NAMES[palace_num]
-                    
+                    is_birth = p_num == destiny["palace"]
+                    p_name, p_dir, p_elem, _ = PALACE_DATA[p_num]
                     cls = "palace-birth" if is_birth else ""
-                    marker = "⭐ YOU" if is_birth else ""
                     
                     st.markdown(f"""
                     <div class="palace-cell {cls}">
-                        <div style="color: {'#FFD700' if is_birth else '#a0aec0'}; font-size: 0.8em;">{p_dir}</div>
-                        <div style="color: #fff; font-weight: bold;">P{palace_num}</div>
-                        <div style="color: #718096; font-size: 0.8em;">{p_elem}</div>
-                        <div style="color: #FFD700; font-size: 0.9em;">{marker}</div>
+                        <div style="color: {'#FFD700' if is_birth else '#718096'}; font-size: 0.75em;">{p_dir}</div>
+                        <div style="color: #fff; font-weight: bold;">P{p_num}</div>
+                        <div style="color: #a0aec0; font-size: 0.8em;">{p_elem}</div>
+                        {"<div style='color: #FFD700;'>⭐ YOU</div>" if is_birth else ""}
                     </div>
                     """, unsafe_allow_html=True)
         
         st.divider()
         
-        # Three Core Components
+        # Three Core Components with Brief Insights
         st.subheader("🌟 Your Natal Components")
         
-        col1, col2, col3 = st.columns(3)
-        
         # Natal Star
-        with col1:
-            star = destiny["star"]
-            s_cn, s_elem, s_label = STAR_LABELS.get(star, ("?", "?", "?"))
-            st.markdown(f"""
-            <div class="component-box component-star">
-                <div style="color: #f6e05e; font-size: 0.8em;">NATAL STAR 星</div>
-                <div style="color: #fff; font-size: 1.5em; margin: 10px 0;">{star}</div>
-                <div style="color: #a0aec0;">{s_cn}</div>
-                <div style="color: #718096; font-size: 0.9em;">{s_elem} • {s_label}</div>
+        star = destiny["star"]
+        star_info = STAR_DATA.get(star, {})
+        st.markdown(f"""
+        <div class="component-card component-star">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                    <div style="color: #f6e05e; font-size: 0.85em;">NATAL STAR 星</div>
+                    <div style="color: #fff; font-size: 1.4em; margin: 5px 0;">{star} <span style="color: #718096; font-size: 0.7em;">{star_info.get('chinese', '')}</span></div>
+                    <div style="color: #a0aec0; font-style: italic;">"{star_info.get('archetype', '?')}"</div>
+                </div>
+                <div style="color: #718096; font-size: 0.9em;">{star_info.get('element', '?')}</div>
             </div>
-            """, unsafe_allow_html=True)
+            <div style="color: #a0aec0; margin: 10px 0; font-size: 0.95em;">{star_info.get('brief', '')}</div>
+            <div style="margin-top: 10px;">
+                {''.join([f'<span class="trait-tag trait-good">✓ {s}</span>' for s in star_info.get('strengths', [])[:3]])}
+            </div>
+            <div style="margin-top: 5px;">
+                {''.join([f'<span class="trait-tag trait-challenge">⚡ {c}</span>' for c in star_info.get('challenges', [])[:2]])}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Natal Door
-        with col2:
-            door = destiny["door"]
-            d_cn, d_elem, d_label = DOOR_LABELS.get(door, ("?", "?", "?"))
-            st.markdown(f"""
-            <div class="component-box component-door">
-                <div style="color: #48bb78; font-size: 0.8em;">NATAL DOOR 门</div>
-                <div style="color: #fff; font-size: 1.5em; margin: 10px 0;">{door}</div>
-                <div style="color: #a0aec0;">{d_cn}</div>
-                <div style="color: #718096; font-size: 0.9em;">{d_elem} • {d_label}</div>
+        door = destiny["door"]
+        door_info = DOOR_DATA.get(door, {})
+        st.markdown(f"""
+        <div class="component-card component-door">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                    <div style="color: #48bb78; font-size: 0.85em;">NATAL DOOR 门</div>
+                    <div style="color: #fff; font-size: 1.4em; margin: 5px 0;">{door} <span style="color: #718096; font-size: 0.7em;">{door_info.get('chinese', '')}</span></div>
+                    <div style="color: #a0aec0; font-style: italic;">"{door_info.get('theme', '?')}"</div>
+                </div>
+                <div style="color: #718096; font-size: 0.9em;">{door_info.get('element', '?')}</div>
             </div>
-            """, unsafe_allow_html=True)
+            <div style="color: #a0aec0; margin: 10px 0; font-size: 0.95em;">{door_info.get('brief', '')}</div>
+            <div style="margin-top: 10px;">
+                {''.join([f'<span class="trait-tag trait-good">🎁 {g}</span>' for g in door_info.get('gifts', [])[:3]])}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Natal Deity
-        with col3:
-            deity = destiny["deity"]
-            de_cn, de_label = DEITY_LABELS.get(deity, ("?", "?"))
-            st.markdown(f"""
-            <div class="component-box component-deity">
-                <div style="color: #9f7aea; font-size: 0.8em;">NATAL DEITY 神</div>
-                <div style="color: #fff; font-size: 1.5em; margin: 10px 0;">{deity}</div>
-                <div style="color: #a0aec0;">{de_cn}</div>
-                <div style="color: #718096; font-size: 0.9em;">{de_label}</div>
+        deity = destiny["deity"]
+        deity_info = DEITY_DATA.get(deity, {})
+        st.markdown(f"""
+        <div class="component-card component-deity">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                    <div style="color: #9f7aea; font-size: 0.85em;">NATAL DEITY 神</div>
+                    <div style="color: #fff; font-size: 1.4em; margin: 5px 0;">{deity} <span style="color: #718096; font-size: 0.7em;">{deity_info.get('chinese', '')}</span></div>
+                </div>
             </div>
-            """, unsafe_allow_html=True)
+            <div style="color: #a0aec0; margin: 10px 0; font-size: 0.95em;">{deity_info.get('brief', '')}</div>
+        </div>
+        """, unsafe_allow_html=True)
         
-        # Formations if any
-        formations = destiny.get("formations", [])
-        if formations:
+        # Formations
+        if destiny.get('formations'):
             st.divider()
             st.subheader("📜 Natal Formations")
-            f_score = destiny.get("formation_score", 0)
-            verdict = "✨ Auspicious" if f_score > 0 else "⚠️ Challenging" if f_score < 0 else "⚖️ Neutral"
             
-            st.markdown(f"**{verdict}** ({len(formations)} formation{'s' if len(formations) > 1 else ''})")
-            for f in formations:
-                st.markdown(f"• {f}")
+            f_score = destiny.get('formation_score', 0)
+            verdict_emoji = "✨" if f_score > 0 else "⚠️" if f_score < 0 else "⚖️"
+            verdict_text = "Auspicious patterns" if f_score > 0 else "Challenging patterns" if f_score < 0 else "Mixed patterns"
+            
+            st.markdown(f"**{verdict_emoji} {verdict_text}** ({len(destiny['formations'])} formation{'s' if len(destiny['formations']) > 1 else ''})")
+            
+            for f in destiny['formations']:
+                emoji = "✨" if f['category'] == 'auspicious' else "⚠️" if f['category'] == 'inauspicious' else "📜"
+                st.markdown(f"• {emoji} **{f['name']}** *({f['category']})*")
         
-        # Quick Summary Card
+        # Quick Summary Table
         st.divider()
         st.subheader("📊 Quick Summary")
         
-        st.markdown(f"""
-        | Component | Name | Element | Brief |
-        |-----------|------|---------|-------|
-        | Star | {destiny['star']} | {STAR_LABELS.get(destiny['star'], ('?','?','?'))[1]} | {STAR_LABELS.get(destiny['star'], ('?','?','?'))[2]} |
-        | Door | {destiny['door']} | {DOOR_LABELS.get(destiny['door'], ('?','?','?'))[1]} | {DOOR_LABELS.get(destiny['door'], ('?','?','?'))[2]} |
-        | Deity | {destiny['deity']} | - | {DEITY_LABELS.get(destiny['deity'], ('?','?'))[1]} |
-        | Palace | P{destiny['palace']} | {PALACE_NAMES[destiny['palace']][2]} | {PALACE_NAMES[destiny['palace']][1]} |
-        """)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f"""
+            | Component | Value |
+            |-----------|-------|
+            | Birth Palace | P{destiny['palace']} ({palace_info[1]}) |
+            | Star | {destiny['star']} ({star_info.get('element', '?')}) |
+            | Door | {destiny['door']} ({door_info.get('element', '?')}) |
+            | Deity | {destiny['deity']} |
+            """)
+        
+        with col2:
+            st.markdown(f"""
+            | Aspect | Info |
+            |--------|------|
+            | Star Archetype | {star_info.get('archetype', '?')} |
+            | Door Theme | {door_info.get('theme', '?')} |
+            | Heaven Stem | {destiny.get('heaven_stem', '?')} |
+            | Earth Stem | {destiny.get('earth_stem', '?')} |
+            """)
         
         # =================================================================
-        # EXPORT FOR FULL READING
+        # AI ANALYSIS BUTTON
         # =================================================================
         st.divider()
-        st.subheader("🤖 Get Full Interpretation")
-        st.caption("Export to AI Analyst for complete destiny reading")
+        st.subheader("🤖 Get Full Reading")
         
-        birth_info = {
-            "date": birth_date.strftime("%Y-%m-%d"),
-            "time": f"{birth_hour:02d}:{birth_minute:02d}",
-            "timezone": "Asia/Singapore (UTC+8)"
-        }
+        st.markdown("""
+        Get a comprehensive, personalized destiny interpretation including 
+        **life path guidance**, **career insights**, and **BaZi comparison**.
+        """)
         
-        export_data = generate_export_data(birth_info, destiny, saved_profile)
-        export_json = json.dumps(export_data, indent=2, ensure_ascii=False)
-        
-        with st.expander("📋 View Export Data"):
-            st.code(export_json, language="json")
-        
-        st.download_button(
-            "💾 Download JSON for Full Reading",
-            export_json,
-            file_name=f"destiny_{birth_date.strftime('%Y%m%d')}.json",
-            mime="application/json",
-            use_container_width=True
+        ai_prompt = generate_ai_prompt(
+            st.session_state.destiny_result["birth_info"],
+            destiny,
+            saved_profile
         )
         
-        st.info("💡 **Paste JSON to Claude:** *'Give me a complete QMDJ destiny reading. Explain my natal Star archetype, Door life theme, and Deity blessing.'*")
+        col1, col2 = st.columns([2, 1])
         
-        # Note about BaZi vs QMDJ
-        with st.expander("ℹ️ QMDJ vs BaZi Destiny"):
+        with col1:
+            if st.button("📋 Copy Full Reading Prompt", type="primary", use_container_width=True):
+                st.session_state.show_destiny_prompt = True
+        
+        with col2:
+            st.download_button(
+                "💾 Save as TXT",
+                ai_prompt,
+                file_name=f"destiny_{birth_date.strftime('%Y%m%d')}.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
+        
+        if st.session_state.get("show_destiny_prompt", False):
+            st.code(ai_prompt, language="markdown")
+            st.info("👆 Copy this prompt and paste it to Claude for a complete destiny reading")
+        
+        # QMDJ vs BaZi note
+        with st.expander("ℹ️ QMDJ Destiny vs BaZi"):
             st.markdown("""
-            **QMDJ Destiny** and **BaZi** are complementary systems:
+            **QMDJ Destiny** and **BaZi** are complementary systems that reveal different aspects:
             
             | Aspect | QMDJ Destiny | BaZi |
             |--------|--------------|------|
-            | Focus | Spiritual path, timing | Character, life phases |
-            | Components | Star, Door, Deity | Day Master, Ten Gods |
-            | Strength | Strategic guidance | Elemental balance |
+            | Focus | Spiritual path, timing mastery | Character, life phases |
+            | Core Element | Star (archetype) | Day Master |
+            | Life Theme | Door (opportunities) | Ten Gods (relationships) |
+            | Support | Deity (spiritual backing) | Useful Gods (elements) |
             
-            **Both together** give a complete picture of your destiny.
+            Using both together provides a **complete picture** of your destiny.
             """)
     
     else:
         st.info("👈 Enter your birth date and time, then click **Reveal Destiny**")
         
         st.markdown("""
-        ### What You'll See
+        ### What You'll Discover
         
-        | This App (Quick) | AI Analyst (Deep) |
-        |------------------|-------------------|
-        | Your natal Star, Door, Deity | Full archetype explanation |
-        | Palace position | Life path interpretation |
-        | Element labels | Strengths & challenges |
-        | Formation names | Personalized guidance |
+        **Quick Insights (App):**
+        - Your natal Star, Door, and Deity
+        - Brief archetype descriptions
+        - Strengths and challenges
+        - Formation patterns
         
-        **QMDJ Destiny** reveals your spiritual blueprint - different from BaZi!
+        **Full Reading (AI):**
+        - Deep archetype analysis
+        - Life path guidance
+        - Career and relationship insights
+        - BaZi comparison (if profile set)
+        - Personalized advice
+        
+        *QMDJ Destiny reveals your spiritual blueprint - different from BaZi!*
         """)
 
 
