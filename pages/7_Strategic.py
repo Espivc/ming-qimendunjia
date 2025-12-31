@@ -193,11 +193,11 @@ def score_hour(hour_dt: datetime, activity: str, user_profile: dict = None) -> d
         formation_names = []
         for f in formations:
             if f.category == FormationCategory.AUSPICIOUS:
-                formation_names.append(f"✨ {f.name}")
+                formation_names.append(f"✨ {f.name_en}")
             elif f.category == FormationCategory.INAUSPICIOUS:
-                formation_names.append(f"⚠️ {f.name}")
+                formation_names.append(f"⚠️ {f.name_en}")
             else:
-                formation_names.append(f"📜 {f.name}")
+                formation_names.append(f"📜 {f.name_en}")
         
         if formation_names:
             insights.append(f"Formations: {', '.join(formation_names[:3])}")
@@ -244,7 +244,7 @@ def score_hour(hour_dt: datetime, activity: str, user_profile: dict = None) -> d
             "star": palace_data.get("star", ""),
             "deity": palace_data.get("deity", ""),
             "heaven_stem": palace_data.get("heaven_stem", ""),
-            "formations": [f.name for f in formations],
+            "formations": [f.name_en for f in formations],
             "formation_categories": [f.category.value for f in formations],
             "insights": insights,
             "verdict": verdict,
