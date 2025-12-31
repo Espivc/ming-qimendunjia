@@ -1,6 +1,6 @@
 # Ming QiMenDunJia 明奇门遁甲 - Project State
 
-## Current Version: v8.0 (Tiered Architecture)
+## Current Version: v8.0 (Hybrid Architecture)
 
 **Repository:** github.com/Espivc/ming-qimendunjia  
 **Live URL:** ming-qimendunjia-3mhmafdxmktvzckeugjm9b.streamlit.app  
@@ -8,41 +8,44 @@
 
 ---
 
-## 🏗️ TWO-PROJECT ARCHITECTURE
+## 🏗️ TWO-PROJECT ARCHITECTURE (HYBRID)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │              PROJECT 2: MING QIMENDUNJIA (App)              │
 │                    "Developer Engine"                        │
 ├─────────────────────────────────────────────────────────────┤
-│  QUICK TIER - Shows WHAT                                    │
+│  HYBRID - Useful Quick Insights                             │
 │  • Chart calculations & data generation                     │
-│  • Scores, rankings, verdicts (1-10)                        │
-│  • Indicator flags (formations, D&E, Horse, Nobleman)       │
-│  • Component labels (Star/Door/Deity names + elements)      │
-│  • JSON export for deep analysis                            │
+│  • Scores with BRIEF explanations (why this score)          │
+│  • Formation detection + names shown                        │
+│  • Component archetypes + strengths/challenges              │
+│  • Door meanings, indicator insights                        │
+│  • "Analyze with AI" button for deep analysis               │
 └──────────────────────────┬──────────────────────────────────┘
-                           │ Export JSON
+                           │ Copy Prompt / Export
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │              PROJECT 1: CLAUDE AI ANALYST                   │
 │                    "Analyst Engine"                          │
 ├─────────────────────────────────────────────────────────────┤
-│  DEEP TIER - Explains WHY                                   │
-│  • Full interpretation & meaning                            │
+│  DEEP - Full Personalized Analysis                          │
+│  • Complete archetype interpretation                        │
+│  • Life path guidance & career insights                     │
 │  • Personalized strategy based on BaZi                      │
 │  • Book cross-references (#64, #71, #73)                    │
-│  • Formation analysis & synthesis                           │
-│  • Life guidance & recommendations                          │
+│  • Formation meanings & synthesis                           │
+│  • Actionable recommendations                               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Design Principle
+### Design Principle (Option C - Hybrid)
 
-> **App answers WHAT** (quick, mobile, offline)  
-> **Claude answers WHY** (deep, personalized, contextual)
+> **App shows WHAT + brief WHY** (useful standalone insights)  
+> **Claude provides DEEP WHY** (personalized, contextual, book references)
 
-This avoids duplication between Project 1 and Project 2.
+App is useful on its own for quick decisions. 
+AI analysis adds depth for important decisions.
 
 ---
 
@@ -56,33 +59,35 @@ This avoids duplication between Project 1 and Project 2.
 - Schema v2.0 export format
 - **Note:** Detection logic only, interpretation in Project 1
 
-### 2. Strategic Execution (pages/7_Strategic.py) ✅ TIERED
-**Quick Tier (App):**
-- Scan 12 hours, show scores 1-10
-- Golden Hour highlight
-- Best/Avoid hour rankings
-- Direction compass with verdicts
-- Indicator flags (📜 formations, 💀 D&E, 🐴 Horse, 👑 Nobleman, 🎴 BaZi)
+### 2. Strategic Execution (pages/7_Strategic.py) ✅ HYBRID
+**App provides:**
+- Hour scores with brief explanations (why good/bad)
+- Door meanings shown (e.g., "Open Door favors business")
+- Formation names displayed (not just counts)
+- Direction compass with insights
+- Indicator explanations (Horse Star, Nobleman, D&E)
 
-**Deep Tier (Export to Claude):**
-- WHY each hour scored as it did
-- Formation meanings
-- Personalized strategy
-- #71 Sun Tzu references
+**AI provides (via prompt):**
+- Full strategic interpretation
+- Formation meanings & synthesis
+- Personalized BaZi recommendations
+- #71 Sun Tzu QMDJ principles
+- Detailed timing strategy
 
-### 3. QMDJ Destiny (pages/8_Destiny.py) ✅ TIERED
-**Quick Tier (App):**
+### 3. QMDJ Destiny (pages/8_Destiny.py) ✅ HYBRID
+**App provides:**
+- Natal Star with archetype + strengths/challenges
+- Natal Door with life theme + gifts
+- Natal Deity with brief blessing description
 - Birth palace position in 9 Palace grid
-- Natal Star, Door, Deity names
-- Element and brief labels
-- Formation names (if any)
+- Formation names if present
 
-**Deep Tier (Export to Claude):**
-- Full archetype explanation
-- Life path interpretation
-- Strengths & challenges
-- Personalized guidance
-- BaZi comparison
+**AI provides (via prompt):**
+- Complete archetype deep-dive
+- Life path and career guidance
+- Component interaction analysis
+- Challenges to navigate
+- BaZi comparison (if profile set)
 
 ### 4. Feng Shui Mode (pages/9_FengShui.py) ✅ PLACEHOLDER
 - Coming soon page
@@ -117,30 +122,31 @@ ming-qimendunjia/
 
 ---
 
-## User Workflow
+## User Workflow (Hybrid)
 
-### Quick Analysis (Mobile/Offline)
-1. Open app → Select mode (Strategic/Destiny)
-2. Enter parameters (date/birth info)
-3. Get scores, rankings, indicators
-4. Make quick decisions
+### Quick Decisions (App Standalone)
+1. Open Strategic/Destiny mode
+2. Enter parameters
+3. Get scores + brief explanations
+4. See archetypes, strengths, challenges
+5. Make informed quick decision
 
-### Deep Analysis (Full Interpretation)
-1. Complete Quick Analysis
-2. Click "Export JSON"
-3. Paste JSON to Claude (Project 1)
-4. Ask: "Analyze this and explain why..."
-5. Receive personalized interpretation with book references
+### Important Decisions (App + AI)
+1. Complete analysis in app
+2. Click "Copy Analysis Prompt" / "Copy Full Reading Prompt"
+3. Paste to Claude (Project 1)
+4. Receive deep personalized interpretation
+5. Get book references, detailed strategy, BaZi synthesis
 
 ---
 
 ## Version History
 
-### v8.0 (Current - Tiered Architecture)
+### v8.0 (Current - Hybrid Architecture)
 - [x] Formation database (53 formations)
-- [x] Strategic Execution mode (Quick tier)
-- [x] QMDJ Destiny mode (Quick tier)
-- [x] Export to AI Analyst workflow
+- [x] Strategic Execution mode (hybrid - useful + AI prompt)
+- [x] QMDJ Destiny mode (hybrid - insights + AI prompt)
+- [x] "Analyze with AI" button workflow
 - [x] Feng Shui placeholder
 - [ ] Integration with Chart page
 - [ ] Export with formation data
