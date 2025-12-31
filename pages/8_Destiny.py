@@ -1,11 +1,11 @@
-# Ming QiMenDunJia v8.0 - QMDJ Destiny Analysis (Hybrid)
+# Ming QiMenDunJia v10.0 - QMDJ Destiny Analysis
 # pages/8_Destiny.py
 """
-QI MEN DESTINY ANALYSIS (奇门命盘) - HYBRID
+QI MEN DESTINY ANALYSIS (奇门命盘)
 
 Your birth chart in Qi Men Dun Jia system.
-- Shows useful insights (component meanings, brief archetypes)
-- "Analyze with AI" button for full personalized reading
+- Auto-syncs birth info from BaZi page
+- Shows useful insights + AI analysis button
 """
 
 import streamlit as st
@@ -81,12 +81,19 @@ st.markdown("""
     }
     .trait-good { background: #1a3728; color: #48bb78; }
     .trait-challenge { background: #371a1a; color: #f56565; }
+    .sync-badge {
+        background: #48bb78;
+        color: white;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.8em;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 
 # =============================================================================
-# COMPONENT DATA (Brief insights, not full interpretations)
+# COMPONENT DATA
 # =============================================================================
 
 STAR_DATA = {
@@ -213,7 +220,6 @@ PALACE_DATA = {
     9: ("Li 离", "South", "Fire", "Fame, recognition, clarity")
 }
 
-# Hour branch to palace mapping
 BRANCH_TO_PALACE = {
     "Zi": 1, "Chou": 8, "Yin": 8, "Mao": 3,
     "Chen": 4, "Si": 4, "Wu": 9, "Wei": 2,
@@ -260,7 +266,7 @@ def calculate_destiny(birth_dt: datetime) -> dict:
             "deity": palace_data.get("deity", "Unknown"),
             "heaven_stem": palace_data.get("heaven_stem", "?"),
             "earth_stem": palace_data.get("earth_stem", "?"),
-            "formations": [{"name": f.name, "category": f.category.value} for f in formations],
+            "formations": [{"name": f.name_en, "category": f.category.value} for f in formations],
             "formation_score": f_score,
             "chart": chart
         }
@@ -290,8 +296,8 @@ def generate_ai_prompt(birth_info: dict, destiny: dict, user_bazi: dict = None) 
     if user_bazi:
         bazi_text = f"""
 **User's BaZi Profile (for comparison):**
-- Day Master: {user_bazi.get('day_master', '?')} ({user_bazi.get('element', '?')})
-- Strength: {user_bazi.get('strength', '?')}
+- Day Master: {user_bazi.get('day_master', '?')} {user_bazi.get('day_master_cn', '')} ({user_bazi.get('element', '?')})
+- Strength: {user_bazi.get('strength', '?')} ({user_bazi.get('strength_pct', '?')}%)
 - Useful Gods: {', '.join(user_bazi.get('useful_gods', []))}
 - Ten God Profile: {user_bazi.get('profile', '?')}
 """
@@ -325,21 +331,15 @@ def generate_ai_prompt(birth_info: dict, destiny: dict, user_bazi: dict = None) 
 
 Please provide a comprehensive reading including:
 
-1. **Natal Star Analysis** - What does {destiny['star']} Star reveal about core personality, natural talents, and life approach? What is the archetype in depth?
+1. **Natal Star Analysis** - What does {destiny['star']} Star reveal about core personality?
+2. **Natal Door Analysis** - How does {destiny['door']} Door shape life opportunities?
+3. **Natal Deity Analysis** - What spiritual backing does {destiny['deity']} provide?
+4. **Component Interactions** - How do Star, Door, and Deity work together?
+5. **Life Path Guidance** - Key lessons, career paths, areas to develop
+6. **Challenges to Navigate** - Potential pitfalls based on this configuration
+{"7. **BaZi Comparison** - How does QMDJ destiny complement the BaZi profile?" if user_bazi else ""}
 
-2. **Natal Door Analysis** - How does {destiny['door']} Door shape life opportunities and challenges? What is the life theme?
-
-3. **Natal Deity Analysis** - What spiritual backing or energy pattern does {destiny['deity']} provide?
-
-4. **Component Interactions** - How do the Star, Door, and Deity work together? Any notable combinations?
-
-5. **Life Path Guidance** - Based on this chart, what are the key life lessons, optimal career paths, and areas to develop?
-
-6. **Challenges to Navigate** - What potential pitfalls should be aware of based on this configuration?
-
-{"7. **BaZi Comparison** - How does this QMDJ destiny complement or contrast with the BaZi profile? What insights emerge from combining both systems?" if user_bazi else ""}
-
-Make the reading personal and actionable, not generic."""
+Make the reading personal and actionable."""
 
     return prompt
 
@@ -352,35 +352,75 @@ def main():
     st.title("⭐ QMDJ Destiny Analysis")
     st.caption("Your Qi Men birth chart • Get AI-powered full reading")
     
+    # Check for BaZi data to sync
+    bazi_birth = st.session_state.get("bazi_birth_info", {})
+    saved_profile = st.session_state.get("user_profile", None)
+    
     # Sidebar
     with st.sidebar:
         st.header("🎂 Birth Information")
         
-        birth_date = st.date_input(
-            "Birth Date",
-            value=date(1990, 1, 1),
-            min_value=date(1920, 1, 1),
-            max_value=date.today()
-        )
+        # Show sync status
+        if bazi_birth:
+            st.markdown('<span class="sync-badge">🔗 Synced from BaZi</span>', unsafe_allow_html=True)
+            st.caption("Birth info loaded from BaZi page")
+            use_bazi_data = st.checkbox("Use BaZi birth info", value=True)
+        else:
+            use_bazi_data = False
+            st.info("💡 Enter BaZi first to auto-sync birth info")
         
-        col1, col2 = st.columns(2)
-        with col1:
-            birth_hour = st.selectbox("Hour", options=list(range(0, 24)), index=12)
-        with col2:
-            birth_minute = st.selectbox("Minute", options=[0, 15, 30, 45], index=0)
+        if use_bazi_data and bazi_birth:
+            # Use synced data
+            birth_date = bazi_birth.get("date", date(1990, 1, 1))
+            birth_hour = bazi_birth.get("hour", 12)
+            birth_minute = bazi_birth.get("minute", 0)
+            
+            st.markdown(f"""
+            **Date:** {birth_date.strftime('%Y-%m-%d') if hasattr(birth_date, 'strftime') else birth_date}  
+            **Time:** {birth_hour:02d}:{birth_minute:02d}
+            """)
+        else:
+            # Manual input
+            birth_date = st.date_input(
+                "Birth Date",
+                value=date(1990, 1, 1),
+                min_value=date(1920, 1, 1),
+                max_value=date.today()
+            )
+            
+            unknown_time = st.checkbox("I don't know my exact birth time", value=False)
+            
+            if unknown_time:
+                st.info("📌 Using 12:00 noon as default")
+                birth_hour = 12
+                birth_minute = 0
+            else:
+                col1, col2 = st.columns(2)
+                with col1:
+                    birth_hour = st.selectbox("Hour", options=list(range(0, 24)), index=12,
+                                              format_func=lambda x: f"{x:02d}")
+                with col2:
+                    birth_minute = st.selectbox("Minute", options=list(range(0, 60)), index=0,
+                                                format_func=lambda x: f"{x:02d}")
         
         st.divider()
         
-        # BaZi profile
-        saved_profile = st.session_state.get("user_profile", None)
+        # BaZi profile display
         if saved_profile:
-            st.success(f"🎴 BaZi: {saved_profile.get('day_master', '?')} Day Master")
+            dm = saved_profile.get('day_master', '?')
+            dm_cn = saved_profile.get('day_master_cn', '')
+            st.success(f"🎴 BaZi: {dm} {dm_cn} Day Master")
+            st.caption(f"Useful: {', '.join(saved_profile.get('useful_gods', []))}")
         
         st.divider()
         analyze_btn = st.button("🔮 Reveal Destiny", type="primary", use_container_width=True)
     
     # Main content
     if analyze_btn:
+        # Handle date conversion
+        if isinstance(birth_date, str):
+            birth_date = date.fromisoformat(birth_date)
+        
         tz = pytz.timezone('Asia/Singapore')
         birth_dt = tz.localize(datetime.combine(birth_date, datetime.min.time().replace(hour=birth_hour, minute=birth_minute)))
         
@@ -393,7 +433,7 @@ def main():
         # Store for AI prompt
         st.session_state.destiny_result = {
             "birth_info": {
-                "date": birth_date.strftime("%Y-%m-%d"),
+                "date": birth_date.strftime("%Y-%m-%d") if hasattr(birth_date, 'strftime') else str(birth_date),
                 "time": f"{birth_hour:02d}:{birth_minute:02d}",
                 "timezone": "Asia/Singapore (UTC+8)"
             },
@@ -407,7 +447,7 @@ def main():
         <div class="destiny-card">
             <div style="color: #9f7aea; font-size: 0.9em;">YOUR QI MEN BIRTH CHART</div>
             <div style="color: #fff; font-size: 1.2em; margin: 8px 0;">
-                {birth_date.strftime('%B %d, %Y')} at {birth_hour:02d}:{birth_minute:02d}
+                {birth_date.strftime('%B %d, %Y') if hasattr(birth_date, 'strftime') else birth_date} at {birth_hour:02d}:{birth_minute:02d}
             </div>
             <div style="color: #FFD700; font-size: 1.1em;">
                 Palace {destiny['palace']} • {palace_info[0]} • {palace_info[1]}
@@ -442,7 +482,7 @@ def main():
         
         st.divider()
         
-        # Three Core Components with Brief Insights
+        # Three Core Components
         st.subheader("🌟 Your Natal Components")
         
         # Natal Star
@@ -515,10 +555,10 @@ def main():
             st.markdown(f"**{verdict_emoji} {verdict_text}** ({len(destiny['formations'])} formation{'s' if len(destiny['formations']) > 1 else ''})")
             
             for f in destiny['formations']:
-                emoji = "✨" if f['category'] == 'auspicious' else "⚠️" if f['category'] == 'inauspicious' else "📜"
+                emoji = "✨" if f['category'] == 'Auspicious' else "⚠️" if f['category'] == 'Inauspicious' else "📜"
                 st.markdown(f"• {emoji} **{f['name']}** *({f['category']})*")
         
-        # Quick Summary Table
+        # Quick Summary
         st.divider()
         st.subheader("📊 Quick Summary")
         
@@ -543,9 +583,7 @@ def main():
             | Earth Stem | {destiny.get('earth_stem', '?')} |
             """)
         
-        # =================================================================
-        # AI ANALYSIS BUTTON
-        # =================================================================
+        # AI Analysis Button
         st.divider()
         st.subheader("🤖 Get Full Reading")
         
@@ -570,7 +608,7 @@ def main():
             st.download_button(
                 "💾 Save as TXT",
                 ai_prompt,
-                file_name=f"destiny_{birth_date.strftime('%Y%m%d')}.txt",
+                file_name=f"destiny_{birth_date.strftime('%Y%m%d') if hasattr(birth_date, 'strftime') else 'chart'}.txt",
                 mime="text/plain",
                 use_container_width=True
             )
@@ -582,20 +620,23 @@ def main():
         # QMDJ vs BaZi note
         with st.expander("ℹ️ QMDJ Destiny vs BaZi"):
             st.markdown("""
-            **QMDJ Destiny** and **BaZi** are complementary systems that reveal different aspects:
+            **QMDJ Destiny** and **BaZi** are complementary systems:
             
             | Aspect | QMDJ Destiny | BaZi |
             |--------|--------------|------|
-            | Focus | Spiritual path, timing mastery | Character, life phases |
-            | Core Element | Star (archetype) | Day Master |
-            | Life Theme | Door (opportunities) | Ten Gods (relationships) |
-            | Support | Deity (spiritual backing) | Useful Gods (elements) |
+            | Focus | Spiritual path, timing | Character, life phases |
+            | Core | Star (archetype) | Day Master |
+            | Theme | Door (opportunities) | Ten Gods |
+            | Support | Deity (spiritual) | Useful Gods |
             
-            Using both together provides a **complete picture** of your destiny.
+            Using both provides a **complete picture** of your destiny.
             """)
     
     else:
         st.info("👈 Enter your birth date and time, then click **Reveal Destiny**")
+        
+        if bazi_birth:
+            st.success("✅ Birth info synced from BaZi page - just click Reveal Destiny!")
         
         st.markdown("""
         ### What You'll Discover
