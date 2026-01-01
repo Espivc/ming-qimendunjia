@@ -15,7 +15,7 @@ v8.0 Changes:
 - Added export functions for Universal Schema v2.0
 """
 
-__version__ = "8.0"
+__version__ = "10.1"
 
 # Try to import from qmdj_engine (may not exist if user is just using formations)
 try:
