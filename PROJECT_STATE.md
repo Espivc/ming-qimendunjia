@@ -1,199 +1,143 @@
-# Ming QiMenDunJia 明奇门遁甲 - Project State
+# Ming QiMenDunJia v10.1 - PROJECT STATE
 
-## Current Version: v8.0 (Hybrid Architecture)
+## Current Version: v10.1 (Bug Fixes + Annual Overlay)
 
-**Repository:** github.com/Espivc/ming-qimendunjia  
-**Live URL:** ming-qimendunjia-3mhmafdxmktvzckeugjm9b.streamlit.app  
-**Last Update:** 2025-12-30
+## 🎯 VERSION 10.1 HIGHLIGHTS
 
----
+### BUG FIXES
+- ✅ **Chart page `</div>` HTML error** - Fixed improper HTML escaping
+- ✅ **Destiny page "Unknown"** - Fixed fallback data and native Streamlit components
 
-## 🏗️ TWO-PROJECT ARCHITECTURE (HYBRID)
+### ACCURACY IMPROVEMENTS
+- ✅ **Solar Term calculations** - Accurate month pillar based on Jie (节)
+- ✅ **Luck Pillar start age** - Calculated from days to solar term (3 days = 1 year)
+- ✅ **DM Strength calculation** - Weighted: Seasonal 40%, Hidden 30%, Visible 20%, Hour 10%
+- ✅ **10 Gods distribution** - Proper hidden stem weighting (Main/Middle/Residual)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│              PROJECT 2: MING QIMENDUNJIA (App)              │
-│                    "Developer Engine"                        │
-├─────────────────────────────────────────────────────────────┤
-│  HYBRID - Useful Quick Insights                             │
-│  • Chart calculations & data generation                     │
-│  • Scores with BRIEF explanations (why this score)          │
-│  • Formation detection + names shown                        │
-│  • Component archetypes + strengths/challenges              │
-│  • Door meanings, indicator insights                        │
-│  • "Analyze with AI" button for deep analysis               │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ Copy Prompt / Export
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              PROJECT 1: CLAUDE AI ANALYST                   │
-│                    "Analyst Engine"                          │
-├─────────────────────────────────────────────────────────────┤
-│  DEEP - Full Personalized Analysis                          │
-│  • Complete archetype interpretation                        │
-│  • Life path guidance & career insights                     │
-│  • Personalized strategy based on BaZi                      │
-│  • Book cross-references (#64, #71, #73)                    │
-│  • Formation meanings & synthesis                           │
-│  • Actionable recommendations                               │
-└─────────────────────────────────────────────────────────────┘
-```
+### NEW FEATURES
+- ✅ **Annual Pillar Overlay** - See how any year (past/future) affects your chart
+- ✅ **Annual 10 God** - Shows the 10 God relationship for the annual stem
+- ✅ **Annual Interpretation** - Provides guidance for each year type
+- ✅ **Useful God check** - Indicates if annual element is favorable
 
-### Design Principle (Option C - Hybrid)
-
-> **App shows WHAT + brief WHY** (useful standalone insights)  
-> **Claude provides DEEP WHY** (personalized, contextual, book references)
-
-App is useful on its own for quick decisions. 
-AI analysis adds depth for important decisions.
-
----
-
-## v8.0 Features
-
-### 1. Formation Database (core/formations.py) ✅
-- **53 formations** with detection logic
-- Categories: Auspicious (21), Inauspicious (20), Neutral (7), Special (5)
-- Auto-detection from palace components
-- Scoring system (-3 to +3)
-- Schema v2.0 export format
-- **Note:** Detection logic only, interpretation in Project 1
-
-### 2. Strategic Execution (pages/7_Strategic.py) ✅ HYBRID
-**App provides:**
-- Hour scores with brief explanations (why good/bad)
-- Door meanings shown (e.g., "Open Door favors business")
-- Formation names displayed (not just counts)
-- Direction compass with insights
-- Indicator explanations (Horse Star, Nobleman, D&E)
-
-**AI provides (via prompt):**
-- Full strategic interpretation
-- Formation meanings & synthesis
-- Personalized BaZi recommendations
-- #71 Sun Tzu QMDJ principles
-- Detailed timing strategy
-
-### 3. QMDJ Destiny (pages/8_Destiny.py) ✅ HYBRID
-**App provides:**
-- Natal Star with archetype + strengths/challenges
-- Natal Door with life theme + gifts
-- Natal Deity with brief blessing description
-- Birth palace position in 9 Palace grid
-- Formation names if present
-
-**AI provides (via prompt):**
-- Complete archetype deep-dive
-- Life path and career guidance
-- Component interaction analysis
-- Challenges to navigate
-- BaZi comparison (if profile set)
-
-### 4. Feng Shui Mode (pages/9_FengShui.py) ✅ PLACEHOLDER
-- Coming soon page
-
----
-
-## Project Structure
+## 📁 FILE STRUCTURE
 
 ```
-ming-qimendunjia/
-├── app.py                    # Main entry point
-├── requirements.txt          # Dependencies
-├── PROJECT_STATE.md          # This file
-├── .streamlit/
-│   └── config.toml          # Theme config
+ming-qimendunjia-v10.1/
 ├── core/
-│   ├── __init__.py          # Module exports (v8.0)
-│   ├── qmdj_engine.py       # QMDJ calculations
-│   ├── bazi_calculator.py   # BaZi calculations
-│   └── formations.py        # Formation database (v8.0)
-└── pages/
-    ├── 1_Chart.py           # Chart generator
-    ├── 2_Export.py          # JSON/CSV export
-    ├── 3_History.py         # Chart history
-    ├── 4_Settings.py        # User profile/BaZi
-    ├── 5_Help.py            # Help documentation
-    ├── 6_BaZi.py            # BaZi calculator
-    ├── 7_Strategic.py       # Strategic Execution (v8.0)
-    ├── 8_Destiny.py         # QMDJ Destiny (v8.0)
-    └── 9_FengShui.py        # Feng Shui placeholder (v8.0)
+│   ├── __init__.py              # v10.1
+│   ├── bazi_calculator.py       # Improved accuracy + annual pillar
+│   └── formations.py            # 53 formations
+├── pages/
+│   ├── 1_Chart.py               # FIXED: HTML escaping
+│   ├── 6_BaZi.py                # NEW: Annual overlay feature
+│   ├── 7_Strategic.py           # Bug fixed
+│   ├── 8_Destiny.py             # FIXED: Unknown display
+│   └── 9_FengShui.py            # Placeholder
+└── PROJECT_STATE.md
 ```
 
----
+## 📊 ANNUAL OVERLAY FEATURE
 
-## User Workflow (Hybrid)
-
-### Quick Decisions (App Standalone)
-1. Open Strategic/Destiny mode
-2. Enter parameters
-3. Get scores + brief explanations
-4. See archetypes, strengths, challenges
-5. Make informed quick decision
-
-### Important Decisions (App + AI)
-1. Complete analysis in app
-2. Click "Copy Analysis Prompt" / "Copy Full Reading Prompt"
-3. Paste to Claude (Project 1)
-4. Receive deep personalized interpretation
-5. Get book references, detailed strategy, BaZi synthesis
-
----
-
-## Version History
-
-### v8.0 (Current - Hybrid Architecture)
-- [x] Formation database (53 formations)
-- [x] Strategic Execution mode (hybrid - useful + AI prompt)
-- [x] QMDJ Destiny mode (hybrid - insights + AI prompt)
-- [x] "Analyze with AI" button workflow
-- [x] Feng Shui placeholder
-- [ ] Integration with Chart page
-- [ ] Export with formation data
-
-### v6.0 (Live)
-- Complete QMDJ engine
-- BaZi calculator integration
-- Death & Emptiness, Horse Star, Nobleman
-- Lead Stem/Door/Star indicators
-- Chart history tracking
-- JSON/CSV export
-
----
-
-## Deployment
-
-### Files to add for v8.0:
 ```
-core/formations.py        # NEW
-core/__init__.py         # UPDATE
-pages/7_Strategic.py     # NEW
-pages/8_Destiny.py       # NEW
-pages/9_FengShui.py      # NEW
-PROJECT_STATE.md         # UPDATE
+┌────────────────────────────────────────────────────────┐
+│  Four Pillars 四柱              │   2025 流年          │
+├────────────────────────────────────────────────────────┤
+│  時    日★    月     年        │   乙 巳              │
+│  丙    庚     戊     戊         │   Wood Snake         │
+│  戌    申     午     午         │                      │
+│                                 │   10 God: IR         │
+│                                 │   The Philosopher    │
+└────────────────────────────────────────────────────────┘
+
+Annual Influence:
+Year of learning and innovation. Study, but watch for overthinking.
+✅ 2025's Wood element is neutral for your chart.
 ```
 
-### Deploy Steps:
-1. Backup current live version
-2. Copy files to repository
-3. Push to GitHub
-4. Reboot Streamlit Cloud if needed
+## 🔧 TECHNICAL IMPROVEMENTS
 
----
+### Solar Term Accuracy
+```python
+# Before (v10.0): Simplified mapping
+month = dt.month  # Wrong!
 
-## Integration Tasks (v8.1)
+# After (v10.1): Proper solar term calculation
+chinese_month, chinese_year = get_chinese_month(dt)
+# Considers Li Chun (立春) as year start
+# Each month starts at Jie (节) not calendar date
+```
 
-1. **Update 1_Chart.py:**
-   - Add formation detection display
-   - Show formation score in summary
+### Luck Pillar Start Age
+```python
+# Before (v10.0): Fixed at age 3
+start_age = 3
 
-2. **Update 2_Export.py:**
-   - Include formation data in JSON
-   - Add formation_score to DB_ROW
+# After (v10.1): Calculated from solar term
+days_to_term = calculate_days_to_solar_term(birth_date)
+start_age = round(days_to_term / 3)  # 3 days = 1 year
+```
 
----
+### DM Strength Weighting
+```python
+# v10.1 weights:
+- Month Branch (Seasonal): 40%  # Most important
+- Hidden Stems: 30%
+- Visible Stems: 20%
+- Hour Branch: 10%
+```
 
-## Contact
+## 🚀 DEPLOYMENT
 
-Project: Ming QiMenDunJia  
-Mission: "Helping people first" with Chinese metaphysics
+```bash
+# Extract files
+unzip ming-qimendunjia-v10.1.zip
+
+# Copy to repo
+cp -r ming-qimendunjia-v10.1/core/* your-repo/core/
+cp -r ming-qimendunjia-v10.1/pages/* your-repo/pages/
+
+# Push
+git add .
+git commit -m "v10.1: Bug fixes + Annual overlay + Accuracy improvements"
+git push
+```
+
+## ✅ VERIFICATION CHECKLIST
+
+After deploying, verify:
+
+1. **Chart page** - No `</div>` text showing in palace cards
+2. **Destiny page** - Shows proper Star/Door/Deity (not "Unknown")
+3. **BaZi page** - Annual pillar column shows correctly
+4. **Annual selector** - Can choose different years
+5. **10 God for annual** - Shows correct relationship
+
+## 📅 VERSION HISTORY
+
+### v10.1 (Current)
+- [x] Fix Chart page HTML bug
+- [x] Fix Destiny page Unknown display
+- [x] Improve solar term accuracy
+- [x] Add Annual Pillar overlay
+- [x] Calculate proper luck pillar start age
+- [x] Improve DM strength calculation
+
+### v10.0 (Previous)
+- [x] Professional BaZi Calculator
+- [x] 10 Profiles Joey Yap style
+- [x] 5 Structures display
+- [x] BaZi → Destiny auto-sync
+
+## 🎯 FUTURE ROADMAP
+
+### v11.0 (Planned)
+- [ ] Pillar interactions (clashes, combinations, harms)
+- [ ] Monthly forecast (12 months)
+- [ ] More symbolic stars
+- [ ] Outcome tracking database
+
+### v12.0 (Planned)
+- [ ] Save multiple profiles
+- [ ] Client management
+- [ ] Multi-language
