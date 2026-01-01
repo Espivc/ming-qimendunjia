@@ -1,731 +1,514 @@
+# Ming QiMenDunJia v10.1 - QMDJ Chart Display
+# pages/1_Chart.py
 """
-Ming Qimen 明奇门 - Chart Generator v6.0
-Features:
-- QMDJ Pillars (chart time, NOT BaZi)
-- All indicators: Death & Emptiness, Lead Palace, Horse Star, Nobleman
-- Ju Number and Structure display
-- Rich palace details with indicator badges
+QMDJ CHART - Fixed HTML display issues
 """
 
 import streamlit as st
-from datetime import datetime, date, timedelta, timezone
+from datetime import datetime, date, timedelta
+import pytz
+
 import sys
-import os
+sys.path.insert(0, '..')
 
-# Add core module to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from core.qmdj_engine import (
+        generate_qmdj_chart, calculate_qmdj_pillars,
+        PALACE_INFO, NINE_STARS, EIGHT_DOORS, EIGHT_DEITIES,
+        calculate_death_emptiness, calculate_horse_star, calculate_nobleman,
+        SGT
+    )
+    from core.formations import detect_formations, get_formation_score
+    IMPORTS_OK = True
+except ImportError as e:
+    IMPORTS_OK = False
+    IMPORT_ERROR = str(e)
 
-from core.qmdj_engine import (
-    generate_qmdj_chart,
-    PALACE_INFO,
-    LUOSHU_GRID,
-    NINE_STARS,
-    EIGHT_DOORS,
-    EIGHT_DEITIES,
-    SGT
-)
+st.set_page_config(page_title="QMDJ Chart | Ming Qimen", page_icon="🎯", layout="wide")
 
-# ============================================================
-# PAGE CONFIG
-# ============================================================
-st.set_page_config(page_title="Chart | Ming Qimen", page_icon="📊", layout="wide")
+# =============================================================================
+# STYLES
+# =============================================================================
 
-# ============================================================
-# CUSTOM CSS
-# ============================================================
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+    .stApp { background-color: #0a1628; }
     
-    :root {
-        --bg-primary: #0a0a12;
-        --bg-card: #1a1a2e;
-        --bg-card-hover: #252542;
-        --gold-primary: #FFD700;
-        --gold-secondary: #FFA500;
-        --gold-muted: #B8860B;
-        --text-primary: #E8E8E8;
-        --text-secondary: #888888;
-        --accent-purple: #9B59B6;
-        --success: #2ecc71;
-        --warning: #f39c12;
-        --danger: #e74c3c;
-        --info: #3498db;
-    }
-    
-    .page-header {
-        font-family: 'Cinzel', serif;
-        color: var(--gold-primary);
-        font-size: 2rem;
-        letter-spacing: 2px;
-    }
-    
-    .page-subtitle {
-        font-family: 'Cormorant Garamond', serif;
-        color: var(--text-secondary);
-        font-style: italic;
-    }
-    
-    /* Structure Banner */
-    .structure-banner {
-        background: linear-gradient(135deg, #2d1f3d 0%, #1a1a2e 100%);
-        border: 2px solid var(--accent-purple);
-        border-radius: 12px;
-        padding: 1rem 1.5rem;
-        margin-bottom: 1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-    
-    .structure-title {
-        font-family: 'Cinzel', serif;
-        color: var(--gold-primary);
-        font-size: 1.3rem;
-        letter-spacing: 2px;
-    }
-    
-    .structure-detail {
-        font-family: 'Cormorant Garamond', serif;
-        color: var(--text-secondary);
-        font-size: 0.95rem;
-    }
-    
-    /* QMDJ Pillars Banner */
-    .qmdj-pillars-banner {
-        background: linear-gradient(135deg, #1a2a3a 0%, #12121e 100%);
-        border: 2px solid var(--info);
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .qmdj-pillars-title {
-        font-family: 'Cinzel', serif;
-        color: var(--info);
-        font-size: 0.85rem;
-        letter-spacing: 2px;
+    .palace-card {
+        background: linear-gradient(135deg, #1a2744 0%, #0d1829 100%);
+        border: 1px solid #2d3748;
+        border-radius: 10px;
+        padding: 12px;
+        min-height: 100px;
         text-align: center;
-        margin-bottom: 0.75rem;
     }
-    
-    .pillar-box {
-        background: linear-gradient(180deg, #0d0d1a 0%, #1a1a2e 100%);
-        border: 1px solid #444;
-        border-radius: 8px;
-        padding: 0.75rem 0.5rem;
-        text-align: center;
-        min-width: 80px;
+    .palace-selected {
+        border: 2px solid #FFD700 !important;
+        background: linear-gradient(135deg, #2d3748 0%, #1a2744 100%);
     }
-    
-    .pillar-label {
-        font-family: 'Cinzel', serif;
-        color: var(--text-secondary);
-        font-size: 0.7rem;
-        letter-spacing: 1px;
-        margin-bottom: 0.3rem;
+    .palace-empty {
+        border: 1px dashed #f56565 !important;
+        opacity: 0.7;
     }
-    
-    .pillar-stem {
-        font-family: 'Noto Sans SC', sans-serif;
-        color: var(--gold-primary);
-        font-size: 1.4rem;
-        font-weight: 700;
+    .palace-horse {
+        box-shadow: 0 0 10px #48bb78;
     }
-    
-    .pillar-branch {
-        font-family: 'Noto Sans SC', sans-serif;
-        color: #87CEEB;
-        font-size: 1.4rem;
-        font-weight: 500;
-    }
-    
-    /* Indicators Row */
-    .indicators-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
+    .palace-noble {
+        box-shadow: 0 0 10px #ecc94b;
     }
     
     .indicator-badge {
-        padding: 0.4rem 0.8rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-family: 'Cormorant Garamond', serif;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-    }
-    
-    .indicator-lead { background: linear-gradient(135deg, #9B59B6, #8E44AD); color: white; }
-    .indicator-horse { background: linear-gradient(135deg, #3498DB, #2980B9); color: white; }
-    .indicator-noble { background: linear-gradient(135deg, #F1C40F, #F39C12); color: black; }
-    .indicator-empty { background: linear-gradient(135deg, #7F8C8D, #95A5A6); color: white; }
-    
-    /* Palace Grid */
-    .palace-grid-container {
-        background: linear-gradient(135deg, #12121e 0%, #0a0a12 100%);
-        border: 1px solid #333;
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-    }
-    
-    .palace-cell {
-        background: linear-gradient(135deg, #1a1a2e 0%, #12121e 100%);
-        border: 1px solid #444;
-        border-radius: 10px;
-        padding: 0.75rem;
-        text-align: center;
-        min-height: 140px;
-        transition: all 0.2s ease;
-        position: relative;
-    }
-    
-    .palace-cell:hover {
-        border-color: var(--gold-primary);
-        transform: scale(1.02);
-        box-shadow: 0 5px 20px rgba(255, 215, 0, 0.15);
-    }
-    
-    .palace-cell.selected {
-        border: 2px solid var(--gold-primary);
-        box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
-    }
-    
-    .palace-cell.has-indicator {
-        border-color: var(--accent-purple);
-    }
-    
-    .palace-cell.is-empty {
-        opacity: 0.7;
-        border-style: dashed;
-    }
-    
-    .palace-badges {
-        position: absolute;
-        top: 5px;
-        right: 5px;
-        display: flex;
-        gap: 2px;
-    }
-    
-    .palace-badge {
-        font-size: 0.7rem;
-        padding: 2px 4px;
-        border-radius: 4px;
-    }
-    
-    .palace-number {
-        font-family: 'Cinzel', serif;
-        color: var(--text-secondary);
-        font-size: 0.65rem;
-        position: absolute;
-        top: 5px;
-        left: 8px;
-    }
-    
-    .palace-name {
-        font-family: 'Cinzel', serif;
-        color: var(--gold-primary);
-        font-size: 0.9rem;
-        font-weight: 600;
-        margin-top: 0.5rem;
-    }
-    
-    .palace-direction {
-        color: var(--text-secondary);
-        font-size: 0.7rem;
-    }
-    
-    .palace-components {
-        margin-top: 0.5rem;
-        font-size: 0.75rem;
-        line-height: 1.4;
-    }
-    
-    .palace-star { color: #F1C40F; }
-    .palace-door { color: #3498DB; }
-    .palace-deity { color: #9B59B6; }
-    
-    /* Detail Panel */
-    .detail-panel {
-        background: linear-gradient(135deg, #1a1a2e 0%, #12121e 100%);
-        border: 2px solid var(--gold-primary);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-top: 1rem;
-    }
-    
-    .detail-title {
-        font-family: 'Cinzel', serif;
-        color: var(--gold-primary);
-        font-size: 1.2rem;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .component-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid #333;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-    }
-    
-    .component-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-    
-    .component-name {
-        font-family: 'Cinzel', serif;
-        color: var(--gold-primary);
-        font-size: 1rem;
-    }
-    
-    .component-chinese {
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-    }
-    
-    .strength-badge {
-        padding: 0.2rem 0.6rem;
-        border-radius: 12px;
-        font-size: 0.75rem;
-    }
-    
-    .strength-timely { background: #27ae60; color: white; }
-    .strength-prosperous { background: #2ecc71; color: white; }
-    .strength-resting { background: #f39c12; color: black; }
-    .strength-confined { background: #e67e22; color: white; }
-    .strength-dead { background: #c0392b; color: white; }
-    
-    /* Element colors */
-    .element-badge {
         display: inline-block;
-        padding: 0.15rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        margin: 0.1rem;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7em;
+        margin: 2px;
     }
-    .wood { background: #228B22; color: white; }
-    .fire { background: #DC143C; color: white; }
-    .earth { background: #DAA520; color: black; }
-    .metal { background: #C0C0C0; color: black; }
-    .water { background: #4169E1; color: white; }
+    .badge-horse { background: #276749; color: #48bb78; }
+    .badge-noble { background: #744210; color: #ecc94b; }
+    .badge-empty { background: #742a2a; color: #fc8181; }
+    .badge-lead { background: #2c5282; color: #63b3ed; }
     
-    /* BaZi Profile Card (sidebar style) */
-    .bazi-profile-card {
-        background: linear-gradient(135deg, #1a2a1a 0%, #0d1a0d 100%);
-        border: 1px solid var(--success);
+    .component-box {
+        background: #1a2744;
         border-radius: 8px;
-        padding: 1rem;
-        margin-top: 1rem;
+        padding: 15px;
+        margin: 8px 0;
+        border-left: 4px solid #4a5568;
     }
+    .component-star { border-left-color: #f6e05e; }
+    .component-door { border-left-color: #48bb78; }
+    .component-deity { border-left-color: #9f7aea; }
     
-    .bazi-profile-title {
-        font-family: 'Cinzel', serif;
-        color: var(--success);
-        font-size: 0.8rem;
-        letter-spacing: 1px;
-        margin-bottom: 0.5rem;
-    }
+    .strength-timely { background: #276749; color: #48bb78; }
+    .strength-prosperous { background: #2c5282; color: #63b3ed; }
+    .strength-resting { background: #744210; color: #ecc94b; }
+    .strength-confined { background: #742a2a; color: #fc8181; }
+    .strength-dead { background: #1a202c; color: #a0aec0; }
 </style>
 """, unsafe_allow_html=True)
 
-# ============================================================
-# HELPER FUNCTIONS
-# ============================================================
+# =============================================================================
+# CONSTANTS
+# =============================================================================
 
-def get_element_class(element: str) -> str:
-    return element.lower() if element else "earth"
+ELEMENT_COLORS = {
+    "Wood": "#48bb78", "Fire": "#f56565", "Earth": "#ecc94b",
+    "Metal": "#a0aec0", "Water": "#4299e1"
+}
+
+STAR_DATA = {
+    "Canopy": {"cn": "天蓬", "elem": "Water", "nature": "Inauspicious"},
+    "Grass": {"cn": "天芮", "elem": "Earth", "nature": "Inauspicious"},
+    "Impulse": {"cn": "天冲", "elem": "Wood", "nature": "Auspicious"},
+    "Assistant": {"cn": "天辅", "elem": "Wood", "nature": "Auspicious"},
+    "Connect": {"cn": "天禽", "elem": "Earth", "nature": "Neutral"},
+    "Heart": {"cn": "天心", "elem": "Metal", "nature": "Auspicious"},
+    "Pillar": {"cn": "天柱", "elem": "Metal", "nature": "Inauspicious"},
+    "Ren": {"cn": "天任", "elem": "Earth", "nature": "Auspicious"},
+    "Hero": {"cn": "天英", "elem": "Fire", "nature": "Neutral"}
+}
+
+DOOR_DATA = {
+    "Open": {"cn": "开门", "elem": "Metal", "nature": "Auspicious"},
+    "Rest": {"cn": "休门", "elem": "Water", "nature": "Auspicious"},
+    "Life": {"cn": "生门", "elem": "Earth", "nature": "Auspicious"},
+    "Harm": {"cn": "伤门", "elem": "Wood", "nature": "Inauspicious"},
+    "Delusion": {"cn": "杜门", "elem": "Wood", "nature": "Neutral"},
+    "Scenery": {"cn": "景门", "elem": "Fire", "nature": "Neutral"},
+    "Death": {"cn": "死门", "elem": "Earth", "nature": "Inauspicious"},
+    "Fear": {"cn": "惊门", "elem": "Metal", "nature": "Inauspicious"}
+}
+
+DEITY_DATA = {
+    "Chief": {"cn": "值符", "nature": "Auspicious"},
+    "Serpent": {"cn": "腾蛇", "nature": "Inauspicious"},
+    "Moon": {"cn": "太阴", "nature": "Auspicious"},
+    "Six Harmony": {"cn": "六合", "nature": "Auspicious"},
+    "Hook": {"cn": "勾陈", "nature": "Neutral"},
+    "Tiger": {"cn": "白虎", "nature": "Inauspicious"},
+    "Emptiness": {"cn": "玄武", "nature": "Inauspicious"},
+    "Nine Earth": {"cn": "九地", "nature": "Auspicious"},
+    "Nine Heaven": {"cn": "九天", "nature": "Auspicious"}
+}
+
+PALACE_NAMES = {
+    1: ("Kan 坎", "N", "Water"),
+    2: ("Kun 坤", "SW", "Earth"),
+    3: ("Zhen 震", "E", "Wood"),
+    4: ("Xun 巽", "SE", "Wood"),
+    5: ("Center 中", "C", "Earth"),
+    6: ("Qian 乾", "NW", "Metal"),
+    7: ("Dui 兑", "W", "Metal"),
+    8: ("Gen 艮", "NE", "Earth"),
+    9: ("Li 离", "S", "Fire")
+}
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
 
 def get_strength_class(strength: str) -> str:
-    return f"strength-{strength.lower()}" if strength else "strength-resting"
+    """Get CSS class for strength badge"""
+    mapping = {
+        "Timely": "strength-timely",
+        "Prosperous": "strength-prosperous",
+        "Resting": "strength-resting",
+        "Confined": "strength-confined",
+        "Dead": "strength-dead"
+    }
+    return mapping.get(strength, "strength-resting")
 
-def extract_chinese(text: str) -> str:
-    """Extract Chinese character from 'Pinyin 中文' format"""
-    if " " in text:
-        return text.split()[-1]
-    return text
-
-# ============================================================
-# PAGE CONTENT
-# ============================================================
-
-st.markdown('<h1 class="page-header">📊 CHART GENERATOR</h1>', unsafe_allow_html=True)
-st.markdown('<p class="page-subtitle">Qi Men Dun Jia Analysis with Full Indicators • 奇门遁甲全指标分析</p>', unsafe_allow_html=True)
-
-st.divider()
-
-# ============================================================
-# CHART GENERATION CONTROLS
-# ============================================================
-
-st.subheader("⚡ Generate Reading")
-
-ctrl_col1, ctrl_col2, ctrl_col3, ctrl_col4 = st.columns([2, 1, 1, 1])
-
-with ctrl_col1:
-    chart_date = st.date_input(
-        "Date 日期",
-        value=date.today(),
-        help="Select date for the reading"
-    )
-
-with ctrl_col2:
-    current_hour = datetime.now(SGT).hour
-    chart_hour = st.selectbox(
-        "Hour 时",
-        options=list(range(0, 24)),
-        index=current_hour,
-        format_func=lambda x: f"{x:02d}:00"
-    )
-
-with ctrl_col3:
-    current_minute = datetime.now(SGT).minute
-    chart_minute = st.selectbox(
-        "Minute 分",
-        options=list(range(0, 60)),
-        index=current_minute,
-        format_func=lambda x: f"{x:02d}"
-    )
-
-with ctrl_col4:
-    chart_type = st.selectbox(
-        "Type 类型",
-        options=["Hour 时盘", "Day 日盘"],
-        help="Hour chart or Day chart"
-    )
-
-# Generate button
-if st.button("🔮 GENERATE CHART 生成盘", type="primary", use_container_width=True):
-    with st.spinner("Calculating Qi Men Dun Jia... 计算奇门遁甲中..."):
-        # Create datetime
-        chart_dt = datetime(
-            chart_date.year, chart_date.month, chart_date.day,
-            chart_hour, chart_minute,
-            tzinfo=SGT
-        )
-        
-        # Generate chart using v6.0 engine
-        chart = generate_qmdj_chart(chart_dt)
-        
-        # Save to session state
-        st.session_state.current_chart = chart
-        st.session_state.selected_palace = None
-        
-        st.success("✅ Chart generated! 盘已生成!")
-        st.rerun()
-
-# ============================================================
-# DISPLAY CHART
-# ============================================================
-
-if st.session_state.get("current_chart"):
-    chart = st.session_state.current_chart
+def calculate_component_strength(component_element: str, palace_element: str) -> str:
+    """Calculate strength based on element relationship"""
+    if component_element == palace_element:
+        return "Timely"
     
-    # ========== STRUCTURE BANNER ==========
-    structure = chart["structure"]
+    produces = {"Wood": "Fire", "Fire": "Earth", "Earth": "Metal", "Metal": "Water", "Water": "Wood"}
+    produced_by = {"Fire": "Wood", "Earth": "Fire", "Metal": "Earth", "Water": "Metal", "Wood": "Water"}
+    controls = {"Wood": "Earth", "Earth": "Water", "Water": "Fire", "Fire": "Metal", "Metal": "Wood"}
+    controlled_by = {"Earth": "Wood", "Water": "Earth", "Fire": "Water", "Metal": "Fire", "Wood": "Metal"}
+    
+    if produces.get(palace_element) == component_element:
+        return "Prosperous"
+    elif produced_by.get(component_element) == palace_element:
+        return "Resting"
+    elif controls.get(palace_element) == component_element:
+        return "Confined"
+    elif controlled_by.get(component_element) == palace_element:
+        return "Dead"
+    return "Resting"
+
+# =============================================================================
+# DISPLAY FUNCTIONS - FIXED HTML
+# =============================================================================
+
+def display_palace_card(palace_num: int, palace_data: dict, selected: bool = False, 
+                        is_empty: bool = False, has_horse: bool = False, has_noble: bool = False):
+    """Display a palace card with proper HTML escaping"""
+    
+    name, direction, element = PALACE_NAMES.get(palace_num, ("?", "?", "?"))
+    
+    star = palace_data.get("star", "?")
+    door = palace_data.get("door", "?")
+    deity = palace_data.get("deity", "?")
+    
+    # Build CSS classes
+    classes = ["palace-card"]
+    if selected:
+        classes.append("palace-selected")
+    if is_empty:
+        classes.append("palace-empty")
+    if has_horse:
+        classes.append("palace-horse")
+    if has_noble:
+        classes.append("palace-noble")
+    
+    css_class = " ".join(classes)
+    
+    # Build indicators HTML - FIXED: properly escape and build
+    indicators = []
+    if has_horse:
+        indicators.append('<span class="indicator-badge badge-horse">🐴 HORSE</span>')
+    if has_noble:
+        indicators.append('<span class="indicator-badge badge-noble">👑 NOBLEMAN</span>')
+    if is_empty:
+        indicators.append('<span class="indicator-badge badge-empty">⭕ EMPTY</span>')
+    
+    indicators_html = " ".join(indicators)
+    
+    # Get element color
+    elem_color = ELEMENT_COLORS.get(element, "#fff")
+    
+    # Build the complete HTML - FIXED: no orphan tags
+    html = f'''<div class="{css_class}">
+        <div style="margin-bottom: 5px;">{indicators_html}</div>
+        <div style="color: #4299e1; font-size: 0.85em;">🔮 PALACE {palace_num}: {name} ({direction})</div>
+        <div style="color: {elem_color}; font-size: 0.75em; margin-top: 3px;">{element}</div>
+        <div style="margin-top: 8px; font-size: 0.85em;">
+            <span style="color: #f6e05e;">★ {star}</span>
+        </div>
+        <div style="font-size: 0.85em;">
+            <span style="color: #48bb78;">🚪 {door}</span>
+        </div>
+        <div style="font-size: 0.85em;">
+            <span style="color: #9f7aea;">👑 {deity}</span>
+        </div>
+    </div>'''
+    
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def display_component_details(comp_type: str, name: str, palace_element: str):
+    """Display component details with strength calculation"""
+    
+    if comp_type == "star":
+        data = STAR_DATA.get(name, {})
+        icon = "⭐"
+        label = "STAR 星"
+        color = "#f6e05e"
+    elif comp_type == "door":
+        data = DOOR_DATA.get(name, {})
+        icon = "🚪"
+        label = "DOOR 门"
+        color = "#48bb78"
+    else:
+        data = DEITY_DATA.get(name, {})
+        icon = "👑"
+        label = "DEITY 神"
+        color = "#9f7aea"
+    
+    cn = data.get("cn", "")
+    elem = data.get("elem", "")
+    nature = data.get("nature", "Neutral")
+    
+    # Calculate strength
+    if elem:
+        strength = calculate_component_strength(elem, palace_element)
+        strength_class = get_strength_class(strength)
+    else:
+        strength = ""
+        strength_class = ""
+    
+    # Nature badge
+    if nature == "Auspicious":
+        nature_badge = '<span style="background: #276749; color: #48bb78; padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">Auspicious</span>'
+    elif nature == "Inauspicious":
+        nature_badge = '<span style="background: #742a2a; color: #fc8181; padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">Inauspicious</span>'
+    else:
+        nature_badge = '<span style="background: #4a5568; color: #a0aec0; padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">Neutral</span>'
+    
+    # Strength badge
+    if strength:
+        strength_badge = f'<span class="indicator-badge {strength_class}">{strength}</span>'
+    else:
+        strength_badge = ""
+    
     st.markdown(f"""
-    <div class="structure-banner">
-        <div>
-            <div class="structure-title">{structure['ju_display']}</div>
-            <div class="structure-detail">
-                {chart['metadata']['date_display']} {chart['metadata']['time_display']} • 
-                Chinese Hour: {chart['metadata']['chinese_hour']['name']} ({chart['metadata']['chinese_hour']['range']})
-            </div>
+    <div class="component-box component-{comp_type}">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: {color}; font-weight: bold;">{icon} {label}</span>
+            {strength_badge}
         </div>
-        <div style="text-align: right;">
-            <div style="color: var(--gold-primary); font-size: 0.9rem;">Lead Palace 值符宫</div>
-            <div style="color: var(--text-primary); font-size: 1.1rem;">
-                Palace {chart['lead_indicators']['lead_stem_palace']} • {chart['lead_indicators']['lead_stem_palace_name']} {chart['lead_indicators']['lead_stem_palace_chinese']}
-            </div>
+        <div style="font-size: 1.2em; margin: 8px 0;">
+            <strong>{name}</strong> <span style="color: #718096;">{cn}</span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            {f'<span style="background: {ELEMENT_COLORS.get(elem, "#718096")}; color: #000; padding: 2px 8px; border-radius: 5px; font-size: 0.8em;">{elem}</span>' if elem else ''}
+            {nature_badge}
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+
+# =============================================================================
+# MAIN
+# =============================================================================
+
+def main():
+    st.title("🎯 QMDJ Chart")
+    st.caption("Qi Men Dun Jia Hour Chart Analysis")
     
-    # ========== QMDJ PILLARS (Chart Time) ==========
-    st.markdown("""
-    <div class="qmdj-pillars-banner">
-        <div class="qmdj-pillars-title">QMDJ CHART PILLARS 奇门时盘四柱 (Chart Time, Not Your BaZi)</div>
-    </div>
-    """, unsafe_allow_html=True)
+    if not IMPORTS_OK:
+        st.error(f"Import error: {IMPORT_ERROR}")
+        st.info("Using demo mode with sample data")
     
-    pillars = chart["qmdj_pillars"]
-    pillar_cols = st.columns(4)
-    pillar_order = ["Hour", "Day", "Month", "Year"]
-    pillar_chinese = ["时柱", "日柱", "月柱", "年柱"]
-    
-    for i, (name, chinese) in enumerate(zip(pillar_order, pillar_chinese)):
-        with pillar_cols[i]:
-            p = pillars[name]
-            stem_char = extract_chinese(p['stem'])
-            branch_char = extract_chinese(p['branch'])
-            
-            st.markdown(f"""
-            <div class="pillar-box">
-                <div class="pillar-label">{name.upper()} • {chinese}</div>
-                <div class="pillar-stem">{stem_char}</div>
-                <div class="pillar-branch">{branch_char}</div>
-                <div style="font-size: 0.7rem; color: #888; margin-top: 0.3rem;">
-                    {p['stem_element']} / {p['branch_element']}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    # ========== SPECIAL INDICATORS ROW ==========
-    st.markdown("")
-    
-    indicators_html = '<div class="indicators-row">'
-    
-    # Lead Palace
-    lead = chart['lead_indicators']
-    indicators_html += f'<span class="indicator-badge indicator-lead">⭐ Lead: P{lead["lead_stem_palace"]} {lead["lead_stem_palace_name"]}</span>'
-    
-    # Horse Star
-    horse = chart['horse_star']
-    if horse.get('horse_palace'):
-        indicators_html += f'<span class="indicator-badge indicator-horse">🐴 Horse: P{horse["horse_palace"]} ({horse["horse_branch"]})</span>'
-    
-    # Nobleman
-    noble = chart['nobleman']
-    if noble.get('day_nobleman_palaces'):
-        palaces_str = ", ".join([f"P{p}" for p in noble['day_nobleman_palaces']])
-        indicators_html += f'<span class="indicator-badge indicator-noble">👑 Nobleman: {palaces_str}</span>'
-    
-    # Death & Emptiness
-    de = chart['death_emptiness']
-    if de.get('affected_palaces'):
-        palaces_str = ", ".join([f"P{p}" for p in de['affected_palaces']])
-        indicators_html += f'<span class="indicator-badge indicator-empty">💀 Empty: {palaces_str} ({", ".join(de["empty_branches"])})</span>'
-    
-    indicators_html += '</div>'
-    st.markdown(indicators_html, unsafe_allow_html=True)
-    
-    # ========== 9-PALACE GRID ==========
-    st.markdown('<div class="palace-grid-container">', unsafe_allow_html=True)
-    st.markdown("### 🏛️ Nine Palaces 九宫格")
-    
-    palaces = chart["palaces"]
-    selected_palace = st.session_state.get("selected_palace")
-    
-    # Create 3x3 grid
-    for row_idx, row in enumerate(LUOSHU_GRID):
-        cols = st.columns(3)
-        for col_idx, palace_num in enumerate(row):
-            with cols[col_idx]:
-                palace = palaces[palace_num]
-                info = palace["palace_info"]
-                star = palace["star"]
-                door = palace["door"]
-                deity = palace["deity"]
-                indicators = palace["indicators"]
-                
-                # Build badge HTML
-                badges = []
-                if indicators["is_lead_palace"]:
-                    badges.append("⭐")
-                if indicators["has_horse_star"]:
-                    badges.append("🐴")
-                if indicators["has_nobleman"]:
-                    badges.append("👑")
-                if indicators["is_empty"]:
-                    badges.append("💀")
-                
-                badges_html = "".join([f'<span class="palace-badge">{b}</span>' for b in badges])
-                
-                # Cell classes
-                cell_classes = ["palace-cell"]
-                if selected_palace == palace_num:
-                    cell_classes.append("selected")
-                if badges:
-                    cell_classes.append("has-indicator")
-                if indicators["is_empty"]:
-                    cell_classes.append("is-empty")
-                
-                st.markdown(f"""
-                <div class="{' '.join(cell_classes)}">
-                    <div class="palace-number">P{palace_num}</div>
-                    <div class="palace-badges">{badges_html}</div>
-                    <div class="palace-name">{info['name']} {info['chinese']}</div>
-                    <div class="palace-direction">{info['direction']} • {info['element']}</div>
-                    <div class="palace-components">
-                        <div class="palace-star">⭐ {star['name']} {star['chinese']}</div>
-                        <div class="palace-door">🚪 {door['name']} {door['chinese']}</div>
-                        <div class="palace-deity">👁️ {deity['name']} {deity['chinese']}</div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                if st.button(f"Analyze P{palace_num}", key=f"btn_p{palace_num}", use_container_width=True):
-                    st.session_state.selected_palace = palace_num
-                    st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # ========== SELECTED PALACE DETAIL ==========
-    if st.session_state.get("selected_palace"):
-        palace_num = st.session_state.selected_palace
-        palace = palaces[palace_num]
-        info = palace["palace_info"]
-        star = palace["star"]
-        door = palace["door"]
-        deity = palace["deity"]
-        indicators = palace["indicators"]
+    # Sidebar - Time Selection
+    with st.sidebar:
+        st.header("⏰ Chart Time")
         
+        tz = pytz.timezone('Asia/Singapore')
+        now = datetime.now(tz)
+        
+        use_now = st.checkbox("Use current time", value=True)
+        
+        if use_now:
+            chart_date = now.date()
+            chart_hour = now.hour
+            chart_minute = now.minute
+            st.info(f"📍 {now.strftime('%Y-%m-%d %H:%M')} SGT")
+        else:
+            chart_date = st.date_input("Date", value=now.date())
+            col1, col2 = st.columns(2)
+            with col1:
+                chart_hour = st.selectbox("Hour", range(24), index=now.hour, format_func=lambda x: f"{x:02d}")
+            with col2:
+                chart_minute = st.selectbox("Min", range(60), index=0, format_func=lambda x: f"{x:02d}")
+        
+        st.divider()
+        
+        # BaZi Profile
+        profile = st.session_state.get("user_profile", None)
+        if profile:
+            st.success(f"🎴 {profile.get('day_master', '?')} {profile.get('day_master_cn', '')} DM")
+            st.caption(f"Useful: {', '.join(profile.get('useful_gods', []))}")
+        else:
+            st.warning("Set BaZi profile for personalized analysis")
+        
+        st.divider()
+        generate_btn = st.button("🔮 Generate Chart", type="primary", use_container_width=True)
+    
+    # Generate chart
+    if generate_btn or st.session_state.get("current_chart"):
+        if generate_btn:
+            tz = pytz.timezone('Asia/Singapore')
+            chart_dt = tz.localize(datetime.combine(chart_date, datetime.min.time().replace(hour=chart_hour, minute=chart_minute)))
+            
+            if IMPORTS_OK:
+                try:
+                    chart = generate_qmdj_chart(chart_dt)
+                    st.session_state.current_chart = chart
+                    st.session_state.chart_time = chart_dt
+                except Exception as e:
+                    st.error(f"Chart generation error: {e}")
+                    # Use demo data
+                    chart = generate_demo_chart()
+                    st.session_state.current_chart = chart
+            else:
+                chart = generate_demo_chart()
+                st.session_state.current_chart = chart
+        else:
+            chart = st.session_state.current_chart
+            chart_dt = st.session_state.get("chart_time", datetime.now())
+        
+        # Get indicators
+        palaces = chart.get("palaces", {})
+        indicators = chart.get("indicators", {})
+        empty_palaces = indicators.get("death_emptiness", {}).get("affected_palaces", [])
+        horse_palace = indicators.get("horse_star", {}).get("palace", 0)
+        noble_palaces = indicators.get("nobleman", {}).get("palaces", [])
+        
+        # Chart info header
         st.markdown(f"""
-        <div class="detail-panel">
-            <div class="detail-title">
-                🔍 Palace {palace_num}: {info['name']} {info['chinese']} ({info['direction']})
-                {' ⭐ LEAD PALACE' if indicators['is_lead_palace'] else ''}
-                {' 🐴 HORSE STAR' if indicators['has_horse_star'] else ''}
-                {' 👑 NOBLEMAN' if indicators['has_nobleman'] else ''}
-                {' 💀 EMPTY' if indicators['is_empty'] else ''}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        ### 📅 {chart_dt.strftime('%Y-%m-%d')} at {chart_dt.strftime('%H:%M')}
+        **Structure:** {chart.get('structure', 'Yang Dun')} | **Ju:** {chart.get('ju_number', '?')}
+        """)
+        
+        st.divider()
+        
+        # 9 Palace Grid
+        st.subheader("🏯 Nine Palaces")
+        
+        # Palace selection
+        selected_palace = st.session_state.get("selected_palace", 5)
+        
+        grid = [[4, 9, 2], [3, 5, 7], [8, 1, 6]]
+        
+        for row in grid:
+            cols = st.columns(3)
+            for i, p_num in enumerate(row):
+                with cols[i]:
+                    p_data = palaces.get(str(p_num), {})
+                    is_selected = p_num == selected_palace
+                    is_empty = p_num in empty_palaces
+                    has_horse = p_num == horse_palace
+                    has_noble = p_num in noble_palaces
+                    
+                    # Make clickable
+                    if st.button(f"P{p_num}", key=f"palace_{p_num}", use_container_width=True):
+                        st.session_state.selected_palace = p_num
+                        selected_palace = p_num
+                    
+                    display_palace_card(p_num, p_data, is_selected, is_empty, has_horse, has_noble)
+        
+        st.divider()
+        
+        # Selected Palace Details
+        st.subheader(f"🔍 Palace {selected_palace} Details")
+        
+        p_data = palaces.get(str(selected_palace), {})
+        p_name, p_dir, p_elem = PALACE_NAMES.get(selected_palace, ("?", "?", "?"))
         
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("#### Components 组件")
-            
-            # Star
-            star_strength_class = get_strength_class(star.get('strength', 'Resting'))
-            st.markdown(f"""
-            <div class="component-card">
-                <div class="component-header">
-                    <span class="component-name">⭐ Star 星</span>
-                    <span class="strength-badge {star_strength_class}">{star.get('strength', 'N/A')}</span>
-                </div>
-                <div><strong>{star['name']}</strong> <span class="component-chinese">{star['chinese']}</span></div>
-                <div><span class="element-badge {get_element_class(star['element'])}">{star['element']}</span> • {star['nature']}</div>
-                <div style="color: #888; font-size: 0.85rem; margin-top: 0.3rem;">{star.get('friendly_name', '')}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Door
-            door_strength_class = get_strength_class(door.get('strength', 'Resting'))
-            st.markdown(f"""
-            <div class="component-card">
-                <div class="component-header">
-                    <span class="component-name">🚪 Door 门</span>
-                    <span class="strength-badge {door_strength_class}">{door.get('strength', 'N/A')}</span>
-                </div>
-                <div><strong>{door['name']}</strong> <span class="component-chinese">{door['chinese']}</span></div>
-                <div><span class="element-badge {get_element_class(door['element'])}">{door['element']}</span> • {door['nature']}</div>
-                <div style="color: #888; font-size: 0.85rem; margin-top: 0.3rem;">{door.get('friendly_name', '')}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Deity
-            st.markdown(f"""
-            <div class="component-card">
-                <div class="component-header">
-                    <span class="component-name">👁️ Deity 神</span>
-                </div>
-                <div><strong>{deity['name']}</strong> <span class="component-chinese">{deity['chinese']}</span></div>
-                <div>{deity['nature']} • {deity.get('function', '')}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown("### Components 组件")
+            display_component_details("star", p_data.get("star", "Unknown"), p_elem)
+            display_component_details("door", p_data.get("door", "Unknown"), p_elem)
+            display_component_details("deity", p_data.get("deity", "Unknown"), p_elem)
         
         with col2:
-            st.markdown("#### Analysis 分析")
+            st.markdown("### Analysis 分析")
             
             # Palace element
-            st.info(f"**Palace Element:** {info['element']}")
+            elem_color = ELEMENT_COLORS.get(p_elem, "#fff")
+            st.markdown(f"""
+            <div style="background: #1a2744; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                <span style="color: {elem_color};">Palace Element: {p_elem}</span>
+            </div>
+            """, unsafe_allow_html=True)
             
-            # Special indicators explanation
-            if indicators['is_lead_palace']:
-                st.success("⭐ **Lead Palace (值符宫):** This is the command palace of the chart. Actions here have authority and leadership energy.")
+            # Indicators
+            is_empty = selected_palace in empty_palaces
+            has_horse = selected_palace == horse_palace
+            has_noble = selected_palace in noble_palaces
             
-            if indicators['has_horse_star']:
-                st.info("🐴 **Horse Star (驿马):** Indicates travel, mobility, and fast results. Good for movement and change.")
+            if has_noble:
+                st.success("👑 **Nobleman (贵人):** Helpful people will appear. Good for seeking assistance.")
+            if has_horse:
+                st.info("🐴 **Horse Star (驿马):** Movement, travel, quick action favored.")
+            if is_empty:
+                st.warning("⭕ **Death & Emptiness (空亡):** Energy is weak. Delay if possible.")
             
-            if indicators['has_nobleman']:
-                st.warning("👑 **Nobleman (贵人):** Helpful people will appear. Good for seeking assistance and making connections.")
-            
-            if indicators['is_empty']:
-                st.error("💀 **Death & Emptiness (空亡):** Energy is diminished. Results may be reduced or delayed. Consider alternative timing.")
-            
-            # BaZi cross-reference
-            if st.session_state.get("user_profile"):
-                st.markdown("---")
-                st.markdown("#### BaZi Alignment 八字配合")
-                profile = st.session_state.user_profile
-                useful = profile.get('useful_gods', [])
+            # BaZi alignment
+            profile = st.session_state.get("user_profile", None)
+            if profile:
+                st.markdown("### BaZi Alignment 八字配合")
+                useful = profile.get("useful_gods", [])
+                st.markdown(f"""
+                <div style="background: #1a2744; padding: 10px; border-radius: 8px;">
+                    <span style="color: #4299e1;">Palace element: {p_elem} | Your useful: {', '.join(useful)}</span>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                if info['element'] in useful:
-                    st.success(f"✅ Palace element ({info['element']}) matches your Useful God! Favorable for you.")
-                elif info['element'] in profile.get('unfavorable', []):
-                    st.error(f"⚠️ Palace element ({info['element']}) is unfavorable for you. Exercise caution.")
-                else:
-                    st.info(f"Palace element: {info['element']} | Your useful: {', '.join(useful)}")
-
-else:
-    # No chart yet
-    st.info("👆 Select date and time above, then click **Generate Chart** to see the Qi Men Dun Jia analysis.")
-    
-    # Quick actions
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🔮 Generate NOW Chart", use_container_width=True):
-            chart = generate_qmdj_chart()
-            st.session_state.current_chart = chart
-            st.rerun()
-    
-    with col2:
-        if st.button("🎂 Set Up BaZi Profile", use_container_width=True):
-            st.switch_page("pages/6_BaZi.py")
-
-# ============================================================
-# SIDEBAR
-# ============================================================
-
-with st.sidebar:
-    st.markdown("### 📊 Chart Info")
-    
-    if st.session_state.get("current_chart"):
-        chart = st.session_state.current_chart
-        st.markdown(f"**Date:** {chart['metadata']['date_display']}")
-        st.markdown(f"**Time:** {chart['metadata']['time_display']}")
-        st.markdown(f"**Structure:** {chart['structure']['structure']}")
-        st.markdown(f"**Ju:** {chart['structure']['ju_number']}")
+                if p_elem in useful:
+                    st.success(f"✅ Palace {p_elem} aligns with your useful element!")
         
-        st.markdown("---")
-        st.markdown("**Lead Indicators:**")
-        st.markdown(f"⭐ Lead Palace: P{chart['lead_indicators']['lead_stem_palace']}")
-        if chart['horse_star'].get('horse_palace'):
-            st.markdown(f"🐴 Horse: P{chart['horse_star']['horse_palace']}")
-        if chart['nobleman'].get('day_nobleman_palaces'):
-            st.markdown(f"👑 Noble: P{', P'.join(map(str, chart['nobleman']['day_nobleman_palaces']))}")
-        if chart['death_emptiness'].get('affected_palaces'):
-            st.markdown(f"💀 Empty: P{', P'.join(map(str, chart['death_emptiness']['affected_palaces']))}")
+        # Formations
+        st.divider()
+        st.subheader("📜 Formations")
+        
+        if IMPORTS_OK:
+            try:
+                formations = detect_formations(p_data)
+                if formations:
+                    for f in formations:
+                        emoji = "✨" if f.category.value == "Auspicious" else "⚠️" if f.category.value == "Inauspicious" else "📜"
+                        st.markdown(f"• {emoji} **{f.name_en}** ({f.category.value}) - {f.meaning[:100]}...")
+                else:
+                    st.info("No special formations detected in this palace")
+            except:
+                st.info("Formation detection unavailable")
+        else:
+            st.info("Formation detection requires full installation")
     
-    st.markdown("---")
-    st.markdown("### 👤 Your Profile")
-    
-    if st.session_state.get("user_profile"):
-        profile = st.session_state.user_profile
-        st.markdown(f"**{profile.get('day_master', 'Unknown')}**")
-        st.markdown(f"{profile.get('polarity', '')} {profile.get('element', '')} • {profile.get('strength', '')}")
-        useful = profile.get('useful_gods', [])
-        if useful:
-            st.caption(f"Useful: {', '.join(useful)}")
     else:
-        st.info("No profile set")
-        if st.button("🔮 Set Up", key="sidebar_setup"):
-            st.switch_page("pages/6_BaZi.py")
+        st.info("👈 Click **Generate Chart** to create a QMDJ chart")
 
-# Footer
-st.markdown("---")
-st.caption("🌟 Ming Qimen 明奇门 | Chart Generator v6.0 | All Indicators Enabled")
+
+def generate_demo_chart():
+    """Generate demo chart data when engine unavailable"""
+    return {
+        "structure": "Yang Dun",
+        "ju_number": 3,
+        "palaces": {
+            "1": {"star": "Assistant", "door": "Open", "deity": "Chief"},
+            "2": {"star": "Connect", "door": "Fear", "deity": "Serpent"},
+            "3": {"star": "Heart", "door": "Life", "deity": "Moon"},
+            "4": {"star": "Pillar", "door": "Rest", "deity": "Six Harmony"},
+            "5": {"star": "Ren", "door": "Death", "deity": "Hook"},
+            "6": {"star": "Hero", "door": "Harm", "deity": "Tiger"},
+            "7": {"star": "Canopy", "door": "Delusion", "deity": "Emptiness"},
+            "8": {"star": "Grass", "door": "Scenery", "deity": "Nine Earth"},
+            "9": {"star": "Impulse", "door": "Open", "deity": "Nine Heaven"}
+        },
+        "indicators": {
+            "death_emptiness": {"affected_palaces": [3, 8]},
+            "horse_star": {"palace": 6},
+            "nobleman": {"palaces": [2, 8]}
+        }
+    }
+
+
+if __name__ == "__main__":
+    main()
