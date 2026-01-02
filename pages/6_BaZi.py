@@ -1,15 +1,16 @@
-# pages/6_BaZi.py - Ming QiMenDunJia v10.3 HYBRID
+# pages/6_BaZi.py - Ming QiMenDunJia v10.3 COMPLETE
 # Complete BaZi Analysis with Enhanced Luck Pillar Visualization
-# KEEPS ALL v10.2 working code + ADDS new visualization only
+# FULLY STANDALONE - No external imports required
 
 import streamlit as st
 from datetime import datetime, date
 import json
+import pandas as pd
 
-st.set_page_config(page_title="BaZi Pro | Ming Qimen", page_icon="🎴", layout="wide")
+st.set_page_config(page_title="BaZi Pro v10.3 | Ming Qimen", page_icon="🎴", layout="wide")
 
 # =============================================================================
-# CONSTANTS & DATA (UNCHANGED from v10.2)
+# CONSTANTS & DATA
 # =============================================================================
 
 STEMS = ["Jia", "Yi", "Bing", "Ding", "Wu", "Ji", "Geng", "Xin", "Ren", "Gui"]
@@ -27,34 +28,29 @@ HIDDEN = {"Zi":["Gui"],"Chou":["Ji","Gui","Xin"],"Yin":["Jia","Bing","Wu"],"Mao"
           "You":["Xin"],"Xu":["Wu","Xin","Ding"],"Hai":["Ren","Jia"]}
 
 # =============================================================================
-# NEW v10.3 FEATURE: ENHANCED LUCK PILLAR VISUALIZATION
+# NEW v10.3: ENHANCED LUCK PILLAR VISUALIZATION
 # =============================================================================
 
-def render_enhanced_luck_pillars(pillars_data, dm_elem, useful_gods, unfav_elems, current_age):
+def render_enhanced_luck_pillars(luck_pillars, current_age, dm_elem, useful_gods, unfav_elems):
     """
-    NEW v10.3: Enhanced visual timeline for Luck Pillars
-    
-    Args:
-        pillars_data: List of 10-year luck pillar dictionaries
-        dm_elem: Day Master element
-        useful_gods: List of useful god elements
-        unfav_elems: List of unfavorable elements
-        current_age: User's current age
+    v10.3 Enhanced visual timeline for 10-Year Luck Pillars
     """
-    if not pillars_data or len(pillars_data) == 0:
-        st.warning("⚠️ No Luck Pillars available. Birth time may be missing.")
+    if not luck_pillars or len(luck_pillars) == 0:
+        st.warning("⚠️ Luck Pillars require birth time. Using noon if time unknown.")
         return
     
     st.markdown("#### 🔮 10-Year Luck Pillar Timeline (v10.3 Enhanced)")
     
-    # Find current pillar
+    # Find current pillar index
     current_idx = 0
-    for i, lp in enumerate(pillars_data):
-        if lp.get('start_age', 0) <= current_age < lp.get('end_age', 999):
+    for i, lp in enumerate(luck_pillars):
+        start = lp.get('start_age', 0)
+        end = lp.get('end_age', 999)
+        if start <= current_age < end:
             current_idx = i
             break
     
-    # Visual timeline HTML
+    # Visual timeline HTML with enhanced styling
     timeline_html = """
     <style>
     .lp-timeline-container {
@@ -65,97 +61,104 @@ def render_enhanced_luck_pillars(pillars_data, dm_elem, useful_gods, unfav_elems
     }
     .lp-timeline {
         display: flex;
-        gap: 12px;
+        gap: 15px;
         min-width: max-content;
         padding: 10px;
     }
     .lp-block {
-        flex: 0 0 130px;
-        min-width: 130px;
-        padding: 18px 12px;
-        border-radius: 10px;
+        flex: 0 0 140px;
+        min-width: 140px;
+        padding: 20px 14px;
+        border-radius: 12px;
         text-align: center;
-        border: 2px solid #444;
+        border: 3px solid #444;
         transition: all 0.3s ease;
         background: #1a1a2e;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
     .lp-current {
-        border: 4px solid #FFD700;
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
-        transform: scale(1.08);
+        border: 4px solid #FFD700 !important;
+        box-shadow: 0 0 25px rgba(255, 215, 0, 0.7) !important;
+        transform: scale(1.1);
         z-index: 10;
     }
     .lp-favorable {
         background: linear-gradient(135deg, #1a4d2e 0%, #2d5f3f 100%);
+        border-color: #2d5f3f;
     }
     .lp-unfavorable {
         background: linear-gradient(135deg, #4d1a1a 0%, #5f2d2d 100%);
+        border-color: #5f2d2d;
     }
     .lp-neutral {
         background: linear-gradient(135deg, #2a2a4d 0%, #3f3f5f 100%);
+        border-color: #3f3f5f;
     }
     .lp-age {
-        font-size: 12px;
-        color: #aaa;
-        margin-bottom: 8px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
+        font-size: 13px;
+        color: #bbb;
+        margin-bottom: 10px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
     }
     .lp-stems {
-        font-size: 22px;
+        font-size: 26px;
         font-weight: bold;
         color: #FFD700;
-        margin: 10px 0;
-        letter-spacing: 3px;
-        text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        margin: 12px 0;
+        letter-spacing: 4px;
+        text-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
     }
     .lp-element {
-        font-size: 13px;
-        color: #ddd;
-        margin: 6px 0;
-        font-weight: 500;
+        font-size: 14px;
+        color: #eee;
+        margin: 8px 0;
+        font-weight: 600;
     }
     .lp-god {
-        font-size: 10px;
-        color: #999;
-        margin-top: 4px;
+        font-size: 11px;
+        color: #aaa;
+        margin-top: 6px;
         font-style: italic;
+        min-height: 20px;
     }
     .lp-status {
-        font-size: 11px;
-        margin-top: 10px;
-        padding: 5px 10px;
-        border-radius: 5px;
+        font-size: 12px;
+        margin-top: 12px;
+        padding: 6px 12px;
+        border-radius: 6px;
         display: inline-block;
-        font-weight: 700;
-        letter-spacing: 0.5px;
+        font-weight: 800;
+        letter-spacing: 1px;
     }
     .lp-fav {
         background: #2d5f3f;
         color: #90EE90;
+        border: 1px solid #90EE90;
     }
     .lp-unfav {
         background: #5f2d2d;
         color: #FFB6C6;
+        border: 1px solid #FFB6C6;
     }
     .lp-neut {
         background: #3f3f5f;
         color: #B0B0FF;
+        border: 1px solid #B0B0FF;
     }
     </style>
     <div class="lp-timeline-container">
         <div class="lp-timeline">
     """
     
-    # Generate blocks for each luck pillar
-    for i, lp in enumerate(pillars_data[:10]):  # Max 10 pillars
+    # Generate pillar blocks
+    for i, lp in enumerate(luck_pillars[:10]):  # Max 10 pillars
         stem = lp.get('stem', '?')
         branch = lp.get('branch', '?')
         start = lp.get('start_age', 0)
         end = lp.get('end_age', start + 10)
-        elem = STEM_ELEM.get(stem, 'Unknown')
-        
-        # Determine 10 God for this pillar (if available in data)
+        elem = lp.get('element', 'Unknown')
         ten_god = lp.get('ten_god', '')
         
         # Determine favorability
@@ -163,19 +166,19 @@ def render_enhanced_luck_pillars(pillars_data, dm_elem, useful_gods, unfav_elems
         is_fav = elem in useful_gods
         is_unfav = elem in unfav_elems
         
-        # Choose classes
+        # Choose styling
         if is_fav:
             block_class = "lp-favorable"
             status_class = "lp-fav"
-            status_text = "✓ Good"
+            status_text = "✓ GOOD"
         elif is_unfav:
             block_class = "lp-unfavorable"
             status_class = "lp-unfav"
-            status_text = "✗ Caution"
+            status_text = "✗ CAUTION"
         else:
             block_class = "lp-neutral"
             status_class = "lp-neut"
-            status_text = "○ Neutral"
+            status_text = "○ NEUTRAL"
         
         current_class = " lp-current" if is_current else ""
         
@@ -197,20 +200,32 @@ def render_enhanced_luck_pillars(pillars_data, dm_elem, useful_gods, unfav_elems
     st.markdown(timeline_html, unsafe_allow_html=True)
     
     # Current period highlight box
-    if current_idx < len(pillars_data):
-        curr = pillars_data[current_idx]
-        curr_elem = STEM_ELEM.get(curr.get('stem', ''), 'Unknown')
-        fav_status = "✅ FAVORABLE" if curr_elem in useful_gods else "⚠️ CAUTION" if curr_elem in unfav_elems else "📌 NEUTRAL"
+    if current_idx < len(luck_pillars):
+        curr = luck_pillars[current_idx]
+        curr_elem = curr.get('element', 'Unknown')
+        
+        if curr_elem in useful_gods:
+            fav_status = "✅ FAVORABLE PERIOD"
+            fav_color = "#90EE90"
+        elif curr_elem in unfav_elems:
+            fav_status = "⚠️ CAUTION PERIOD"
+            fav_color = "#FFB6C6"
+        else:
+            fav_status = "📌 NEUTRAL PERIOD"
+            fav_color = "#B0B0FF"
         
         st.markdown(f"""
         <div style='background: linear-gradient(135deg, #1a2332 0%, #2a3f5f 100%); 
-                    padding: 22px; border-radius: 12px; border-left: 5px solid #FFD700; 
-                    margin: 25px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3);'>
-            <div style='color: #FFD700; font-size: 18px; font-weight: bold; margin-bottom: 10px;'>
-                📍 Current 10-Year Period ({fav_status})
+                    padding: 24px; border-radius: 14px; border-left: 6px solid #FFD700; 
+                    margin: 30px 0; box-shadow: 0 6px 20px rgba(0,0,0,0.4);'>
+            <div style='color: #FFD700; font-size: 20px; font-weight: bold; margin-bottom: 12px;'>
+                📍 Your Current 10-Year Period
             </div>
-            <div style='color: #fff; font-size: 15px; line-height: 1.8;'>
-                <strong>Age:</strong> {curr.get('start_age', 0)}-{curr.get('end_age', 0)-1} &nbsp;•&nbsp; 
+            <div style='color: {fav_color}; font-size: 16px; font-weight: 600; margin-bottom: 14px;'>
+                {fav_status}
+            </div>
+            <div style='color: #fff; font-size: 16px; line-height: 2;'>
+                <strong>Age Range:</strong> {curr.get('start_age', 0)}-{curr.get('end_age', 0)-1} &nbsp;•&nbsp; 
                 <strong>Pillar:</strong> {curr.get('stem', '?')}{curr.get('branch', '?')} &nbsp;•&nbsp; 
                 <strong>Element:</strong> {curr_elem} &nbsp;•&nbsp; 
                 <strong>Profile:</strong> {curr.get('ten_god', 'N/A')}
@@ -218,30 +233,24 @@ def render_enhanced_luck_pillars(pillars_data, dm_elem, useful_gods, unfav_elems
         </div>
         """, unsafe_allow_html=True)
 
-# =============================================================================
-# CALCULATION FUNCTIONS - Calculate Luck Pillars
-# =============================================================================
 
-def calculate_luck_pillars_simple(pillars, gender, birth_year):
+def calculate_luck_pillars_v10_3(pillars, gender, birth_year):
     """
-    Simple luck pillar calculation
-    Returns list of 10-year pillars with start/end ages
+    Calculate 10-Year Luck Pillars
+    Simplified version for v10.3 - full version needs solar term calculation
     """
-    # This is simplified - a full version needs proper Jia-Zi cycle
-    # For v10.3 demo, we'll create basic structure
-    
     month_stem = pillars[1]["stem"]
     month_branch = pillars[1]["branch"]
     
-    # Determine direction (forward/backward)
+    # Determine direction (forward/backward based on year polarity and gender)
     year_stem_idx = STEMS.index(pillars[0]["stem"])
     is_yang_year = (year_stem_idx % 2 == 0)
     is_male = (gender == "Male")
     
     forward = (is_yang_year and is_male) or (not is_yang_year and not is_male)
     
-    # Starting age (simplified - usually 1-10 based on birth proximity to solar term)
-    start_age = 5  # Default for demo
+    # Starting age (simplified - actual needs birth proximity to solar term)
+    start_age = 5  # Default starting age
     
     # Generate 10 pillars
     luck_pillars = []
@@ -266,16 +275,15 @@ def calculate_luck_pillars_simple(pillars, gender, birth_year):
             "element": pillar_elem,
             "start_age": start_age + (i * 10),
             "end_age": start_age + ((i + 1) * 10),
-            "ten_god": ""  # Could calculate if needed
+            "ten_god": ""  # Will be filled later
         })
     
     return luck_pillars
 
 # =============================================================================
-# ALL OTHER v10.2 FUNCTIONS (UNCHANGED)
+# 1. DAY MASTER INTERPRETATIONS
 # =============================================================================
 
-# 1. DAY MASTER INTERPRETATIONS (keeping all from v10.2)
 DAY_MASTER_INFO = {
     "Jia": {
         "cn": "甲", "element": "Wood", "polarity": "Yang",
@@ -449,6 +457,7 @@ DAY_MASTER_INFO = {
     }
 }
 
+# 2-4. DIRECTIONS DATA
 ELEMENT_DIRECTIONS = {
     "Wood": {"favorable": ["East", "Southeast"], "direction_cn": "東、東南", "color": "Green", "number": "3, 4"},
     "Fire": {"favorable": ["South"], "direction_cn": "南", "color": "Red/Purple", "number": "9"},
@@ -457,6 +466,7 @@ ELEMENT_DIRECTIONS = {
     "Water": {"favorable": ["North"], "direction_cn": "北", "color": "Black/Blue", "number": "1"}
 }
 
+# 10. SIX ASPECTS
 SIX_ASPECTS = {
     "Wealth": {"gods": ["DW", "IW"], "area": "财运", "meaning": "Money, assets, business income, financial opportunities"},
     "Career": {"gods": ["DO", "7K"], "area": "事业", "meaning": "Job, position, authority, recognition, government relations"},
@@ -466,6 +476,7 @@ SIX_ASPECTS = {
     "Health": {"gods": ["7K", "HO"], "area": "健康", "meaning": "Physical wellness, stress, pressure, vitality"}
 }
 
+# 12-13. STRUCTURES & PROFILES
 FIVE_STRUCTURES = {
     "Wealth": {
         "gods": ["DW", "IW"], "element": "Wood", "cn": "財型",
@@ -532,6 +543,7 @@ TEN_PROFILES = {
            "strengths": "Innovative, intuitive, independent, unique", "challenges": "Can be isolated, eccentric"}
 }
 
+# 11. MONTHLY ELEMENTS 2025
 MONTHLY_STEMS_2025 = {
     1: ("Ding", "Chou", "丁丑", "Yin Fire on Earth"), 2: ("Wu", "Yin", "戊寅", "Yang Earth on Wood"),
     3: ("Ji", "Mao", "己卯", "Yin Earth on Wood"), 4: ("Geng", "Chen", "庚辰", "Yang Metal on Earth"),
@@ -540,6 +552,10 @@ MONTHLY_STEMS_2025 = {
     9: ("Yi", "You", "乙酉", "Yin Wood on Metal"), 10: ("Bing", "Xu", "丙戌", "Yang Fire on Earth"),
     11: ("Ding", "Hai", "丁亥", "Yin Fire on Water"), 12: ("Wu", "Zi", "戊子", "Yang Earth on Water")
 }
+
+# =============================================================================
+# CALCULATION FUNCTIONS
+# =============================================================================
 
 def calc_year_pillar(year):
     idx = (year - 1984) % 60
@@ -636,12 +652,12 @@ def get_useful_gods(strength_cat, dm_elem):
     return [u for u in useful if u], [u for u in unfav if u]
 
 # =============================================================================
-# MAIN APP (v10.2 + v10.3 HYBRID)
+# MAIN APP
 # =============================================================================
 
 def main():
     st.title("🎴 BaZi Pro Analysis v10.3")
-    st.caption("Complete Four Pillars Analysis with Enhanced Luck Pillar Visualization")
+    st.caption("Complete Four Pillars Analysis • Now with Enhanced Luck Pillar Visualization")
     
     # Sidebar
     with st.sidebar:
@@ -703,11 +719,12 @@ def main():
             main_profile = max(gods_dist, key=gods_dist.get)
             
             # NEW v10.3: Calculate Luck Pillars
-            luck_pillars = calculate_luck_pillars_simple(pillars, gender, birth_date.year)
+            luck_pillars = calculate_luck_pillars_v10_3(pillars, gender, birth_date.year)
             
             # Add 10 God to each luck pillar
             for lp in luck_pillars:
-                lp["ten_god"] = TEN_PROFILES.get(get_10_god(dm, lp["stem"]), {}).get("name", "")
+                ten_god_code = get_10_god(dm, lp["stem"])
+                lp["ten_god"] = TEN_PROFILES.get(ten_god_code, {}).get("name", "")
             
             # Save to session
             st.session_state.bazi_calc = True
@@ -717,7 +734,8 @@ def main():
                 "strength_pct": strength_pct, "strength_cat": strength_cat,
                 "useful": useful, "unfav": unfav,
                 "gods_dist": gods_dist, "main_profile": main_profile,
-                "gender": gender, "luck_pillars": luck_pillars  # NEW v10.3
+                "gender": gender,
+                "luck_pillars": luck_pillars  # NEW v10.3
             }
             
             st.session_state.user_profile = {
@@ -736,46 +754,44 @@ def main():
         current_age = datetime.now().year - st.session_state.bazi_info["date"].year
         
         # =====================================================================
-        # NEW v10.3: ENHANCED LUCK PILLARS SECTION
+        # NEW v10.3 SECTION: ENHANCED LUCK PILLARS
         # =====================================================================
         st.header("🆕 v10.3: Enhanced Luck Pillars (10-Year Periods)")
         
         if "luck_pillars" in data and data["luck_pillars"]:
             render_enhanced_luck_pillars(
                 data["luck_pillars"],
+                current_age,
                 dm_elem,
                 data["useful"],
-                data["unfav"],
-                current_age
+                data["unfav"]
             )
             
-            # Detailed table
+            # Detailed table in expander
             with st.expander("📊 Detailed Luck Pillar Table"):
-                import pandas as pd
-                
                 rows = []
                 for lp in data["luck_pillars"]:
-                    fav = "✓" if STEM_ELEM[lp["stem"]] in data["useful"] else "○"
+                    elem = lp.get("element", "Unknown")
+                    fav_mark = "✓" if elem in data["useful"] else "✗" if elem in data["unfav"] else "○"
+                    
                     rows.append({
-                        "Period": f"{lp['start_age']}-{lp['end_age']-1}",
-                        "Pillar": f"{lp['stem']}{lp['branch']}",
-                        "Element": STEM_ELEM[lp["stem"]],
-                        "10 God": lp.get("ten_god", ""),
-                        "Fav": fav
+                        "Period": f"{lp.get('start_age', 0)}-{lp.get('end_age', 0)-1}",
+                        "Pillar": f"{lp.get('stem', '?')}{lp.get('branch', '?')}",
+                        "Element": elem,
+                        "Ten God": lp.get("ten_god", ""),
+                        "Status": fav_mark
                     })
                 
                 df = pd.DataFrame(rows)
                 st.dataframe(df, use_container_width=True, hide_index=True)
         else:
-            st.info("ℹ️ Luck Pillars calculated using simplified method for v10.3 demo")
+            st.info("ℹ️ Luck Pillars use simplified calculation for v10.3 demo")
         
         st.divider()
         
         # =====================================================================
-        # ALL OTHER v10.2 SECTIONS (KEEPING EVERYTHING)
-        # =====================================================================
-        
         # 1. DAY MASTER SECTION
+        # =====================================================================
         st.header("1️⃣ DAY MASTER 日主")
         
         dm_info = DAY_MASTER_INFO.get(dm, {})
@@ -802,14 +818,354 @@ def main():
         
         st.divider()
         
-        # Continue with all other v10.2 sections...
-        # (I'll abbreviate here - the full file would include ALL sections from v10.2)
+        # =====================================================================
+        # 3-4. FAVORABLE & UNFAVORABLE DIRECTIONS
+        # =====================================================================
+        st.header("3️⃣ FAVORABLE & 4️⃣ UNFAVORABLE DIRECTIONS")
         
-        st.info("✅ v10.3 Hybrid: Enhanced Luck Pillars + All v10.2 features included")
-        st.caption("See original file for remaining 12 analysis sections")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader("✅ Favorable 吉方")
+            for elem in data["useful"]:
+                dir_info = ELEMENT_DIRECTIONS.get(elem, {})
+                st.success(f"""
+                **{elem}** {dir_info.get('direction_cn', '')}
+                - Directions: {', '.join(dir_info.get('favorable', []))}
+                - Colors: {dir_info.get('color', '')}
+                - Numbers: {dir_info.get('number', '')}
+                """)
+        
+        with col2:
+            st.subheader("❌ Unfavorable 凶方")
+            for elem in data["unfav"]:
+                dir_info = ELEMENT_DIRECTIONS.get(elem, {})
+                st.error(f"""
+                **{elem}** {dir_info.get('direction_cn', '')}
+                - Directions: {', '.join(dir_info.get('favorable', []))}
+                - Colors: {dir_info.get('color', '')}
+                - Numbers: {dir_info.get('number', '')}
+                """)
+        
+        st.divider()
+        
+        # =====================================================================
+        # 5. FOUR PILLARS WITH HIDDEN STEMS
+        # =====================================================================
+        st.header("5️⃣ FOUR PILLARS & HIDDEN STEMS 四柱藏干")
+        
+        cols = st.columns(4)
+        for i, p in enumerate(pillars):
+            with cols[i]:
+                s_idx = STEMS.index(p["stem"])
+                b_idx = BRANCHES.index(p["branch"])
+                s_elem = STEM_ELEM[p["stem"]]
+                
+                # 10 God
+                if p["stem"] == dm:
+                    god_display = "★ Day Master"
+                else:
+                    god = get_10_god(dm, p["stem"])
+                    god_display = TEN_PROFILES.get(god, {}).get("name", god)
+                
+                st.markdown(f"### {p['name']} 柱")
+                st.info(f"""
+                **{STEMS_CN[s_idx]} {BRANCHES_CN[b_idx]}**
+                
+                {p['stem']} {p['branch']}
+                
+                {ANIMALS[b_idx]}
+                """)
+                
+                st.caption(f"{s_elem} | {god_display}")
+                
+                # Hidden stems
+                hidden = HIDDEN.get(p["branch"], [])
+                st.markdown("**Hidden 藏干:**")
+                for hs in hidden:
+                    hs_god = get_10_god(dm, hs)
+                    st.caption(f"• {hs} {STEMS_CN[STEMS.index(hs)]} ({hs_god})")
+        
+        st.divider()
+        
+        # =====================================================================
+        # 6 & 8. ANNUAL PILLAR 2025
+        # =====================================================================
+        st.header("6️⃣ 2025 ANNUAL PILLAR 流年 & 8️⃣ ANNUAL STAR")
+        
+        annual_stem, annual_branch = "Yi", "Si"
+        annual_god = get_10_god(dm, annual_stem)
+        annual_info = TEN_PROFILES.get(annual_god, {})
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f"""
+            ### 2025 乙巳 Yi Si (Wood Snake)
+            
+            **Annual Element:** Wood (Yin)
+            
+            **Your 10 God for 2025:** {annual_god} {annual_info.get('name', '')}
+            """)
+            
+            if "Wood" in data["useful"]:
+                st.success("✅ 2025's Wood element is FAVORABLE for you!")
+            elif "Wood" in data["unfav"]:
+                st.error("⚠️ 2025's Wood element is UNFAVORABLE - exercise caution")
+            else:
+                st.info("📌 2025's Wood element is NEUTRAL for you")
+        
+        with col2:
+            st.markdown(f"""
+            ### Annual Theme: {annual_info.get('name', '')}
+            
+            {annual_info.get('description', '')}
+            
+            **Strengths this year:** {annual_info.get('strengths', '')}
+            
+            **Watch out for:** {annual_info.get('challenges', '')}
+            """)
+        
+        st.divider()
+        
+        # =====================================================================
+        # 7. MOBILITY DIRECTIONS 2025
+        # =====================================================================
+        st.header("7️⃣ 2025 MOBILITY DIRECTIONS 出行方位")
+        
+        st.markdown("Based on your useful elements and 2025's annual energy:")
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.success(f"""
+            ### ✅ GO TO
+            **{', '.join(data['useful'])} directions**
+            
+            Best for: Travel, business, opportunities
+            """)
+        with col2:
+            st.warning(f"""
+            ### ⚡ CAUTION
+            **Wood (East/SE) in 2025**
+            
+            Snake year energy - watch for obstacles
+            """)
+        with col3:
+            st.error(f"""
+            ### ❌ AVOID
+            **{', '.join(data['unfav'])} directions**
+            
+            May bring challenges or setbacks
+            """)
+        
+        st.divider()
+        
+        # =====================================================================
+        # 10. SIX ASPECTS
+        # =====================================================================
+        st.header("🔟 SIX ASPECTS 六神")
+        
+        gods_dist = data["gods_dist"]
+        
+        cols = st.columns(3)
+        for i, (aspect, info) in enumerate(SIX_ASPECTS.items()):
+            with cols[i % 3]:
+                score = sum(gods_dist.get(g, 0) for g in info["gods"])
+                
+                if score >= 20:
+                    st.success(f"""
+                    ### {aspect} {info['area']}
+                    **Score: {score:.0f}%** ⬆️ Strong
+                    
+                    {info['meaning']}
+                    """)
+                elif score >= 10:
+                    st.info(f"""
+                    ### {aspect} {info['area']}
+                    **Score: {score:.0f}%** ➡️ Moderate
+                    
+                    {info['meaning']}
+                    """)
+                else:
+                    st.warning(f"""
+                    ### {aspect} {info['area']}
+                    **Score: {score:.0f}%** ⬇️ Weak
+                    
+                    {info['meaning']}
+                    """)
+        
+        st.divider()
+        
+        # =====================================================================
+        # 11. MONTHLY INFLUENCE 2025
+        # =====================================================================
+        st.header("1️⃣1️⃣ 2025 MONTHLY INFLUENCE 月运")
+        
+        st.markdown("How each month of 2025 affects you based on your Day Master:")
+        
+        cols = st.columns(4)
+        for month in range(1, 13):
+            with cols[(month-1) % 4]:
+                m_stem, m_branch, m_cn, m_desc = MONTHLY_STEMS_2025[month]
+                m_god = get_10_god(dm, m_stem)
+                m_elem = STEM_ELEM[m_stem]
+                
+                if m_elem in data["useful"]:
+                    st.success(f"""
+                    **{month}月 {m_cn}**
+                    {m_god} - Favorable ✅
+                    """)
+                elif m_elem in data["unfav"]:
+                    st.error(f"""
+                    **{month}月 {m_cn}**
+                    {m_god} - Caution ⚠️
+                    """)
+                else:
+                    st.info(f"""
+                    **{month}月 {m_cn}**
+                    {m_god} - Neutral 📌
+                    """)
+        
+        st.divider()
+        
+        # =====================================================================
+        # 12. FIVE STRUCTURES
+        # =====================================================================
+        st.header("1️⃣2️⃣ FIVE STRUCTURES 五型格")
+        
+        struct_scores = {}
+        for name, info in FIVE_STRUCTURES.items():
+            struct_scores[name] = sum(gods_dist.get(g, 0) for g in info["gods"])
+        
+        main_struct = max(struct_scores, key=struct_scores.get)
+        
+        col1, col2 = st.columns([1, 2])
+        
+        with col1:
+            st.markdown("### Structure Strength")
+            for name, score in sorted(struct_scores.items(), key=lambda x: x[1], reverse=True):
+                st.progress(score/100 if score <= 100 else 1.0)
+                st.caption(f"{name}: {score:.0f}%")
+        
+        with col2:
+            main_info = FIVE_STRUCTURES[main_struct]
+            st.markdown(f"""
+            ### Your Main Structure: {main_struct} {main_info['cn']}
+            
+            {main_info['description']}
+            
+            **Strengths:** {main_info['strengths']}
+            
+            **Best Careers:** {main_info['careers']}
+            """)
+        
+        st.divider()
+        
+        # =====================================================================
+        # 13. TEN PROFILES
+        # =====================================================================
+        st.header("1️⃣3️⃣ TEN PROFILES 十神格")
+        
+        sorted_profiles = sorted(gods_dist.items(), key=lambda x: x[1], reverse=True)
+        main_profile = sorted_profiles[0][0]
+        
+        col1, col2 = st.columns([1, 2])
+        
+        with col1:
+            st.markdown("### Profile Strength")
+            for god, score in sorted_profiles:
+                if score > 0:
+                    info = TEN_PROFILES.get(god, {})
+                    st.progress(score/100 if score <= 100 else 1.0)
+                    st.caption(f"{god} {info.get('cn', '')}: {score:.0f}%")
+        
+        with col2:
+            main_info = TEN_PROFILES[main_profile]
+            st.markdown(f"""
+            ### Your Main Profile: {main_info['name']}
+            
+            {main_info['description']}
+            
+            **Strengths:** {main_info['strengths']}
+            
+            **Challenges:** {main_info['challenges']}
+            """)
+            
+            if len(sorted_profiles) > 1 and sorted_profiles[1][1] > 5:
+                sec_god = sorted_profiles[1][0]
+                sec_info = TEN_PROFILES[sec_god]
+                st.markdown(f"""
+                ---
+                **Secondary Profile:** {sec_info['name']}
+                
+                {sec_info['brief']}
+                """)
+        
+        st.divider()
+        
+        # =====================================================================
+        # EXPORT
+        # =====================================================================
+        st.header("📤 Export Analysis")
+        
+        if st.button("🤖 Generate AI Analysis Prompt", use_container_width=True):
+            prompt = f"""Complete BaZi Analysis for {st.session_state.bazi_info['date']} at {st.session_state.bazi_info['hour']}:00
+
+**DAY MASTER:** {dm} {STEMS_CN[STEMS.index(dm)]} ({dm_elem})
+**Strength:** {data['strength_cat']} ({data['strength_pct']}%)
+
+**FOUR PILLARS:**
+- Year: {pillars[0]['stem']} {pillars[0]['branch']}
+- Month: {pillars[1]['stem']} {pillars[1]['branch']}
+- Day: {pillars[2]['stem']} {pillars[2]['branch']} ← Day Master
+- Hour: {pillars[3]['stem']} {pillars[3]['branch']}
+
+**USEFUL GODS:** {', '.join(data['useful'])}
+**UNFAVORABLE:** {', '.join(data['unfav'])}
+
+**MAIN PROFILE:** {TEN_PROFILES[main_profile]['name']}
+**MAIN STRUCTURE:** {main_struct}
+
+**10 GODS DISTRIBUTION:** {gods_dist}
+
+**CURRENT LUCK PILLAR:** Age {data['luck_pillars'][0]['start_age']}-{data['luck_pillars'][0]['end_age']-1}
+
+**2025 OUTLOOK:**
+- Annual Pillar: Yi Si (Wood Snake)
+- 10 God for 2025: {annual_god} {annual_info.get('name', '')}
+- Wood is {'FAVORABLE' if 'Wood' in data['useful'] else 'UNFAVORABLE' if 'Wood' in data['unfav'] else 'NEUTRAL'} for this chart
+
+Please provide comprehensive analysis covering all 13 areas."""
+            
+            st.code(prompt, language="markdown")
+            st.success("✅ Copy the prompt above and paste into Claude AI for detailed analysis!")
     
     else:
         st.info("👈 Enter birth info and click **Calculate BaZi** to begin")
+        
+        with st.expander("📋 What This Page Covers"):
+            st.markdown("""
+            **Complete BaZi Analysis v10.3 includes:**
+            
+            🆕 **NEW:** Enhanced 10-Year Luck Pillar Timeline with visual indicators
+            
+            1. ✅ Day Master personality & traits
+            2. ✅ Qi Men Destiny Palace (see Destiny page)
+            3. ✅ Favorable directions based on useful gods
+            4. ✅ Unfavorable directions to avoid
+            5. ✅ Four Pillars with hidden stems
+            6. ✅ 2025 Annual Pillar overlay
+            7. ✅ 2025 Mobility directions
+            8. ✅ Annual BaZi star for 2025
+            9. ✅ 2025 Life Palace (see Destiny page)
+            10. ✅ Six Aspects analysis
+            11. ✅ 2025 Monthly influence
+            12. ✅ Five Structures with explanations
+            13. ✅ Ten Profiles with explanations
+            """)
+    
+    # Footer
+    st.divider()
+    st.caption("Ming QiMenDunJia v10.3 COMPLETE • Enhanced Luck Pillar Visualization + All 13 Analysis Areas")
 
 
 if __name__ == "__main__":
