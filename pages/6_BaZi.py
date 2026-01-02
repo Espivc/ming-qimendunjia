@@ -41,6 +41,19 @@ def render_enhanced_luck_pillars(luck_pillars, current_age, dm_elem, useful_gods
     
     st.markdown("#### 🔮 10-Year Luck Pillar Timeline (v10.3 Enhanced)")
     
+    # Quick color legend
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.markdown("🟢 **Favorable** = Good timing")
+    with col2:
+        st.markdown("🔴 **Caution** = Extra effort needed")
+    with col3:
+        st.markdown("🔵 **Neutral** = Stay flexible")
+    with col4:
+        st.markdown("⭐ **Gold Border** = Current period")
+    
+    st.markdown("")  # Spacing
+    
     # Find current pillar index
     current_idx = 0
     for i, lp in enumerate(luck_pillars):
@@ -197,6 +210,7 @@ def render_enhanced_luck_pillars(luck_pillars, current_age, dm_elem, useful_gods
     </div>
     """
     
+    # CRITICAL FIX: Must use unsafe_allow_html=True to render the timeline
     st.markdown(timeline_html, unsafe_allow_html=True)
     
     # Current period highlight box
@@ -232,6 +246,142 @@ def render_enhanced_luck_pillars(luck_pillars, current_age, dm_elem, useful_gods
             </div>
         </div>
         """, unsafe_allow_html=True)
+    
+    # ADD EXPLANATION SECTION
+    st.markdown("---")
+    st.markdown("### 📖 How to Read Your Luck Pillars")
+    
+    with st.expander("❓ What Are Luck Pillars? (Click to Learn)", expanded=False):
+        st.markdown("""
+        **Luck Pillars (大运 Da Yun)** are 10-year cycles that influence your life journey. Think of them as:
+        
+        🌊 **Life's Changing Seasons**
+        - Your BaZi chart is your **permanent personality** (like your DNA)
+        - Luck Pillars are **temporary influences** (like weather patterns)
+        - Each 10-year period brings different opportunities and challenges
+        
+        🎯 **What Each Color Means:**
+        
+        🟢 **GREEN (Favorable)**
+        - The element SUPPORTS your Day Master
+        - Good time for: Growth, new ventures, taking action
+        - Energy flows smoothly with your nature
+        - Opportunities come easier
+        
+        🔴 **RED (Caution)**
+        - The element CLASHES with your Day Master
+        - Good time for: Consolidation, learning, patience
+        - May face more obstacles or resistance
+        - Require extra effort for success
+        
+        🔵 **BLUE (Neutral)**
+        - The element has mixed effects
+        - Good time for: Balance, flexibility, observation
+        - Neither especially helpful nor harmful
+        - Outcomes depend on your actions
+        
+        ⭐ **GOLD BORDER = You Are Here**
+        - This is your current 10-year period
+        - Pay special attention to this cycle's advice
+        """)
+    
+    with st.expander("🎨 Understanding Your Timeline Colors", expanded=False):
+        st.markdown(f"""
+        **Your Day Master: {dm}** ({dm_elem})
+        
+        **Your Useful Gods (Favorable Elements):** {', '.join(data['useful'])}
+        - These elements HELP you succeed
+        - When Luck Pillars match these, opportunities increase
+        
+        **Your Unfavorable Elements:** {', '.join(data['unfav'])}
+        - These elements create challenges
+        - When Luck Pillars match these, extra caution needed
+        
+        ---
+        
+        **Reading the Timeline:**
+        
+        1. **Find the GOLD BORDER** → That's where you are NOW
+        2. **Look at the color:**
+           - Green = Good time to pursue your goals
+           - Red = Focus on stability and patience
+           - Blue = Stay flexible and adaptable
+        3. **Check the Element** → Compare with your Useful Gods
+        4. **Read the Ten God** → Shows the theme of that period
+        """)
+    
+    with st.expander("💡 How to Use This Information", expanded=False):
+        st.markdown("""
+        **Favorable Periods (Green):**
+        - ✅ Start new businesses or projects
+        - ✅ Make major life changes
+        - ✅ Take calculated risks
+        - ✅ Expand and grow
+        - ✅ Network and connect with people
+        
+        **Caution Periods (Red):**
+        - 🔸 Focus on consolidating what you have
+        - 🔸 Learn new skills and knowledge
+        - 🔸 Build strong foundations
+        - 🔸 Be patient with obstacles
+        - 🔸 Save money and resources
+        
+        **Neutral Periods (Blue):**
+        - 🔹 Stay adaptable and flexible
+        - 🔹 Balance action with caution
+        - 🔹 Make decisions based on current situation
+        - 🔹 Neither rush nor delay
+        
+        ---
+        
+        **Important Reminders:**
+        
+        1. **Unfavorable ≠ Bad Luck**
+           - It just means more effort required
+           - Many successful people achieved greatness during "difficult" periods
+           - Your actions still matter most!
+        
+        2. **Favorable ≠ Automatic Success**
+           - Still need to take action
+           - Opportunities require recognition and effort
+           - Good timing helps, but work is essential
+        
+        3. **You Control Your Destiny**
+           - Luck Pillars show timing, not fate
+           - Use favorable periods to accelerate
+           - Use caution periods to prepare and strengthen
+        """)
+    
+    with st.expander("📊 Your Specific Periods Explained", expanded=False):
+        st.markdown("**Breakdown of Your 10-Year Cycles:**\n")
+        
+        for i, lp in enumerate(data['luck_pillars'][:10]):
+            elem = lp.get('element', 'Unknown')
+            is_fav = elem in data['useful']
+            is_unfav = elem in data['unfav']
+            
+            if is_fav:
+                status_emoji = "🟢"
+                status_text = "FAVORABLE"
+                advice = "Great time to pursue goals, start projects, take opportunities"
+            elif is_unfav:
+                status_emoji = "🔴"
+                status_text = "CAUTION"
+                advice = "Focus on stability, learning, patience. Avoid major risks"
+            else:
+                status_emoji = "🔵"
+                status_text = "NEUTRAL"
+                advice = "Stay flexible. Success depends on your actions and timing"
+            
+            st.markdown(f"""
+            {status_emoji} **Age {lp.get('start_age', 0)}-{lp.get('end_age', 0)-1}: {lp.get('stem', '?')}{lp.get('branch', '?')}** ({status_text})
+            - Element: {elem}
+            - Profile: {lp.get('ten_god', 'N/A')}
+            - Advice: {advice}
+            """)
+            
+            if i < len(data['luck_pillars']) - 1:
+                st.markdown("---")
 
 
 def calculate_luck_pillars_v10_3(pillars, gender, birth_year):
