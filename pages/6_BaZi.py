@@ -1,531 +1,881 @@
-# Ming QiMenDunJia v10.1 - Professional BaZi with Annual Overlay
-# pages/6_BaZi.py
-"""
-PROFESSIONAL BAZI with:
-- 10 Profiles (Joey Yap style)
-- 5 Structures display
-- 2025 Annual Pillar overlay
-- Improved accuracy
-"""
-
+# pages/6_BaZi.py - Ming QiMenDunJia v10.2 PRO
+# Complete BaZi Analysis with Full Interpretations
 import streamlit as st
 from datetime import datetime, date
 import json
 
-import sys
-sys.path.insert(0, '..')
-
-try:
-    from core.bazi_calculator import (
-        calculate_bazi_chart, chart_to_dict, BaZiChart,
-        STEM_ELEMENTS, HEAVENLY_STEMS_CN, EARTHLY_BRANCHES_CN,
-        TEN_PROFILES, get_ten_god, calculate_annual_pillar
-    )
-    BAZI_OK = True
-except ImportError as e:
-    BAZI_OK = False
-    IMPORT_ERR = str(e)
-
-st.set_page_config(page_title="BaZi Analysis | Ming Qimen", page_icon="🎴", layout="wide")
+st.set_page_config(page_title="BaZi Pro | Ming Qimen", page_icon="🎴", layout="wide")
 
 # =============================================================================
-# STYLES
+# CONSTANTS & DATA
 # =============================================================================
 
-st.markdown("""
-<style>
-    .stApp { background-color: #0a1628; }
-    .pillar-card {
-        background: linear-gradient(135deg, #1a2744 0%, #0d1829 100%);
-        border: 1px solid #2d3748;
-        border-radius: 12px;
-        padding: 15px;
-        text-align: center;
-    }
-    .pillar-dm { border: 2px solid #4299e1 !important; }
-    .pillar-annual { border: 2px solid #f6ad55 !important; background: linear-gradient(135deg, #2d3020 0%, #1a2744 100%); }
-    .dm-card {
-        background: linear-gradient(135deg, #1a2744 0%, #0d1829 100%);
-        border: 2px solid #4299e1;
-        border-radius: 12px;
-        padding: 20px;
-        text-align: center;
-    }
-    .annual-card {
-        background: linear-gradient(135deg, #3d2e0a 0%, #1a2744 100%);
-        border: 2px solid #f6ad55;
-        border-radius: 12px;
-        padding: 15px;
-        text-align: center;
-    }
-    .profile-bar {
-        background: #1a2744;
-        border-radius: 5px;
-        height: 28px;
-        margin: 4px 0;
-        position: relative;
-        overflow: hidden;
-    }
-    .luck-pillar {
-        background: #1a2744;
-        border-radius: 8px;
-        padding: 8px;
-        text-align: center;
-        border: 1px solid #2d3748;
-        min-width: 70px;
-    }
-    .luck-current { border: 2px solid #FFD700 !important; background: #2d3748; }
-</style>
-""", unsafe_allow_html=True)
+STEMS = ["Jia", "Yi", "Bing", "Ding", "Wu", "Ji", "Geng", "Xin", "Ren", "Gui"]
+STEMS_CN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
+BRANCHES = ["Zi", "Chou", "Yin", "Mao", "Chen", "Si", "Wu", "Wei", "Shen", "You", "Xu", "Hai"]
+BRANCHES_CN = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
+ANIMALS = ["Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake", "Horse", "Goat", "Monkey", "Rooster", "Dog", "Pig"]
+
+STEM_ELEM = {"Jia":"Wood","Yi":"Wood","Bing":"Fire","Ding":"Fire","Wu":"Earth","Ji":"Earth","Geng":"Metal","Xin":"Metal","Ren":"Water","Gui":"Water"}
+STEM_POL = {"Jia":"Yang","Yi":"Yin","Bing":"Yang","Ding":"Yin","Wu":"Yang","Ji":"Yin","Geng":"Yang","Xin":"Yin","Ren":"Yang","Gui":"Yin"}
+BRANCH_ELEM = {"Zi":"Water","Chou":"Earth","Yin":"Wood","Mao":"Wood","Chen":"Earth","Si":"Fire","Wu":"Fire","Wei":"Earth","Shen":"Metal","You":"Metal","Xu":"Earth","Hai":"Water"}
+
+HIDDEN = {"Zi":["Gui"],"Chou":["Ji","Gui","Xin"],"Yin":["Jia","Bing","Wu"],"Mao":["Yi"],"Chen":["Wu","Yi","Gui"],
+          "Si":["Bing","Wu","Geng"],"Wu":["Ding","Ji"],"Wei":["Ji","Ding","Yi"],"Shen":["Geng","Ren","Wu"],
+          "You":["Xin"],"Xu":["Wu","Xin","Ding"],"Hai":["Ren","Jia"]}
 
 # =============================================================================
-# CONSTANTS
+# 1. DAY MASTER INTERPRETATIONS
 # =============================================================================
 
-ELEMENT_COLORS = {
-    "Wood": "#48bb78", "Fire": "#f56565", "Earth": "#ecc94b",
-    "Metal": "#a0aec0", "Water": "#4299e1"
+DAY_MASTER_INFO = {
+    "Jia": {
+        "cn": "甲", "element": "Wood", "polarity": "Yang",
+        "image": "🌲 The Tall Tree / The General",
+        "personality": """**Jia Wood** is the mighty oak tree - tall, upright, and unwavering. You possess natural leadership qualities and strong principles. Like a tree that grows straight toward the sun, you have clear ambitions and the determination to achieve them.
+
+**Core Traits:**
+- Strong sense of justice and fairness
+- Natural leader who inspires others
+- Stubborn but reliable and trustworthy
+- Needs space to grow and expand
+- Values integrity above all else
+
+**Strengths:** Leadership, vision, integrity, perseverance, ambition
+**Challenges:** Inflexibility, stubbornness, difficulty adapting, can be too rigid""",
+        "career": "Leadership roles, management, entrepreneurship, law, military, forestry, education",
+        "relationship": "Needs a partner who respects your independence. Best with supportive Earth or nurturing Water types."
+    },
+    "Yi": {
+        "cn": "乙", "element": "Wood", "polarity": "Yin",
+        "image": "🌿 The Vine / The Diplomat",
+        "personality": """**Yi Wood** is the flexible vine or flower - adaptable, graceful, and resilient. You possess the ability to navigate complex situations with elegance. Like a vine that finds its way around obstacles, you excel at finding creative solutions.
+
+**Core Traits:**
+- Highly adaptable and flexible
+- Excellent at networking and relationships
+- Artistic and creative nature
+- Can appear gentle but has inner strength
+- Skilled at diplomacy and negotiation
+
+**Strengths:** Adaptability, creativity, diplomacy, charm, resilience
+**Challenges:** Can be indecisive, overly dependent on others, may lack direction""",
+        "career": "Arts, design, diplomacy, counseling, beauty industry, fashion, public relations",
+        "relationship": "Seeks harmony and connection. Compatible with protective Metal or supportive Water types."
+    },
+    "Bing": {
+        "cn": "丙", "element": "Fire", "polarity": "Yang",
+        "image": "☀️ The Sun / The Inspirer",
+        "personality": """**Bing Fire** is the blazing sun - warm, generous, and impossible to ignore. You radiate energy and enthusiasm that naturally draws others to you. Like the sun that shines on everyone equally, you're generous and open-hearted.
+
+**Core Traits:**
+- Charismatic and magnetic personality
+- Generous and warm-hearted
+- Natural optimist with infectious enthusiasm
+- Needs to be seen and appreciated
+- Can illuminate any situation
+
+**Strengths:** Charisma, generosity, optimism, leadership, inspiration
+**Challenges:** Can be attention-seeking, burns out easily, may lack depth""",
+        "career": "Entertainment, media, politics, public speaking, marketing, hospitality",
+        "relationship": "Needs admiration and appreciation. Best with grounding Earth or appreciative Wood types."
+    },
+    "Ding": {
+        "cn": "丁", "element": "Fire", "polarity": "Yin",
+        "image": "🕯️ The Candle / The Thinker",
+        "personality": """**Ding Fire** is the gentle candlelight - focused, thoughtful, and illuminating. You possess deep intuition and the ability to see what others miss. Like a candle that lights the darkness, you bring clarity to complex situations.
+
+**Core Traits:**
+- Highly intuitive and perceptive
+- Thoughtful and contemplative
+- Warm but focused energy
+- Excellent at detailed work
+- Inner fire that sustains through challenges
+
+**Strengths:** Intuition, focus, warmth, perception, dedication
+**Challenges:** Can be moody, overly sensitive, may burn out from within""",
+        "career": "Research, writing, counseling, spirituality, detailed crafts, psychology",
+        "relationship": "Seeks deep connection. Compatible with supportive Wood or stable Earth types."
+    },
+    "Wu": {
+        "cn": "戊", "element": "Earth", "polarity": "Yang",
+        "image": "🏔️ The Mountain / The Stabilizer",
+        "personality": """**Wu Earth** is the mighty mountain - solid, reliable, and unmovable. You provide stability and security to everyone around you. Like a mountain that has stood for millennia, you're patient and enduring.
+
+**Core Traits:**
+- Extremely reliable and trustworthy
+- Patient and steady in all situations
+- Provides security and stability to others
+- Can be stubborn but always dependable
+- Natural mediator and peacekeeper
+
+**Strengths:** Reliability, patience, stability, trustworthiness, endurance
+**Challenges:** Stubbornness, resistance to change, can be too passive""",
+        "career": "Real estate, agriculture, management, banking, construction, HR",
+        "relationship": "Provides security and stability. Best with dynamic Fire or grounded Metal types."
+    },
+    "Ji": {
+        "cn": "己", "element": "Earth", "polarity": "Yin",
+        "image": "🌾 The Garden / The Nurturer",
+        "personality": """**Ji Earth** is fertile garden soil - nurturing, productive, and life-giving. You have the ability to help others grow and flourish. Like soil that supports all plants, you're adaptable and supportive.
+
+**Core Traits:**
+- Nurturing and supportive nature
+- Highly adaptable to different situations
+- Productive and practical minded
+- Excellent at bringing out the best in others
+- Humble but essential presence
+
+**Strengths:** Nurturing, adaptability, productivity, humility, support
+**Challenges:** Can be too self-sacrificing, may lack personal boundaries""",
+        "career": "Education, healthcare, agriculture, food industry, childcare, social work",
+        "relationship": "Nurtures and supports partners. Compatible with appreciative Wood or passionate Fire types."
+    },
+    "Geng": {
+        "cn": "庚", "element": "Metal", "polarity": "Yang",
+        "image": "⚔️ The Sword / The Warrior",
+        "personality": """**Geng Metal** is the sharp sword - decisive, principled, and powerful. You cut through confusion with clarity and make tough decisions others avoid. Like a sword that must be forged through fire, you grow stronger through challenges.
+
+**Core Traits:**
+- Decisive and action-oriented
+- Strong sense of justice and fairness
+- Courageous and willing to fight for beliefs
+- Values loyalty and honor
+- Direct communication style
+
+**Strengths:** Decisiveness, courage, loyalty, justice, strength
+**Challenges:** Can be harsh, inflexible, may hurt others unintentionally""",
+        "career": "Military, law enforcement, surgery, engineering, sports, martial arts, management",
+        "relationship": "Needs respect and loyalty. Best with softening Water or supportive Earth types."
+    },
+    "Xin": {
+        "cn": "辛", "element": "Metal", "polarity": "Yin",
+        "image": "💎 The Jewel / The Perfectionist",
+        "personality": """**Xin Metal** is the precious jewel - refined, beautiful, and valuable. You have high standards and an eye for quality in everything. Like a jewel that must be polished, you continuously refine yourself.
+
+**Core Traits:**
+- High standards and attention to detail
+- Refined taste and aesthetic sense
+- Sensitive and emotionally deep
+- Values quality over quantity
+- Can be critical but seeks perfection
+
+**Strengths:** Refinement, sensitivity, attention to detail, aesthetic sense
+**Challenges:** Can be overly critical, perfectionist, may appear cold""",
+        "career": "Jewelry, finance, law, luxury goods, beauty, quality control, arts",
+        "relationship": "Seeks refinement and appreciation. Compatible with nurturing Earth or warming Fire types."
+    },
+    "Ren": {
+        "cn": "壬", "element": "Water", "polarity": "Yang",
+        "image": "🌊 The Ocean / The Philosopher",
+        "personality": """**Ren Water** is the vast ocean - deep, powerful, and containing infinite wisdom. You possess great intellectual capacity and the ability to understand complex systems. Like the ocean that connects all continents, you see the big picture.
+
+**Core Traits:**
+- Deep intellectual capacity
+- Excellent strategic thinking
+- Adaptable yet powerful
+- Natural wisdom and insight
+- Can be overwhelming in intensity
+
+**Strengths:** Wisdom, strategy, adaptability, depth, vision
+**Challenges:** Can be scattered, emotionally turbulent, may lack focus""",
+        "career": "Philosophy, research, shipping, travel, consulting, strategic planning, import/export",
+        "relationship": "Needs intellectual connection. Best with grounding Earth or inspiring Wood types."
+    },
+    "Gui": {
+        "cn": "癸", "element": "Water", "polarity": "Yin",
+        "image": "💧 The Rain / The Intuitive",
+        "personality": """**Gui Water** is gentle rain or morning dew - subtle, nourishing, and life-giving. You possess deep intuition and the ability to nurture growth in others. Like rain that falls everywhere equally, you're compassionate and giving.
+
+**Core Traits:**
+- Highly intuitive and psychic
+- Gentle and compassionate nature
+- Nourishing presence for others
+- Deep emotional understanding
+- Subtle but persistent influence
+
+**Strengths:** Intuition, compassion, gentleness, emotional intelligence
+**Challenges:** Can be overly emotional, may lack assertiveness, easily influenced""",
+        "career": "Spirituality, counseling, healthcare, writing, music, psychology, caregiving",
+        "relationship": "Seeks emotional depth. Compatible with protective Metal or stable Earth types."
+    }
 }
 
-PROFILE_COLORS = {
-    "DO": "#c53030", "IR": "#d69e2e", "7K": "#9b2c2c", "DR": "#dd6b20",
-    "F": "#3182ce", "EG": "#38a169", "RW": "#805ad5", "DW": "#d53f8c",
-    "IW": "#e53e3e", "HO": "#319795"
-}
+# =============================================================================
+# 2-4. DIRECTIONS DATA
+# =============================================================================
 
-PROFILE_NAMES = {
-    "DO": "The Diplomat 正官格", "IR": "The Philosopher 偏印格",
-    "7K": "The Warrior 七殺格", "DR": "The Analyzer 正印格",
-    "F": "The Friend 比肩格", "EG": "The Artist 食神格",
-    "RW": "The Leader 劫財格", "DW": "The Director 正財格",
-    "IW": "The Pioneer 偏財格", "HO": "The Performer 傷官格"
-}
-
-STRUCTURE_MAPPING = {
-    "Wealth": ["DW", "IW"], "Influence": ["DO", "7K"],
-    "Resources": ["DR", "IR"], "Companion": ["F", "RW"], "Output": ["EG", "HO"]
-}
-
-STRUCTURE_COLORS = {
-    "Wealth": "#48bb78", "Influence": "#f56565", "Resources": "#ecc94b",
-    "Companion": "#a0aec0", "Output": "#4299e1"
+ELEMENT_DIRECTIONS = {
+    "Wood": {"favorable": ["East", "Southeast"], "direction_cn": "東、東南", "color": "Green", "number": "3, 4"},
+    "Fire": {"favorable": ["South"], "direction_cn": "南", "color": "Red/Purple", "number": "9"},
+    "Earth": {"favorable": ["Northeast", "Southwest", "Center"], "direction_cn": "東北、西南、中", "color": "Yellow/Brown", "number": "2, 5, 8"},
+    "Metal": {"favorable": ["West", "Northwest"], "direction_cn": "西、西北", "color": "White/Gold", "number": "6, 7"},
+    "Water": {"favorable": ["North"], "direction_cn": "北", "color": "Black/Blue", "number": "1"}
 }
 
 # =============================================================================
-# DISPLAY FUNCTIONS
+# 10. SIX ASPECTS
 # =============================================================================
 
-def display_pillar(pillar, title: str, is_dm: bool = False, is_annual: bool = False, day_master: str = None):
-    """Display pillar card"""
-    elem_color = ELEMENT_COLORS.get(pillar.stem_element, "#fff")
-    
-    ten_god = ""
-    if day_master and pillar.stem != day_master:
-        code, _, _ = get_ten_god(day_master, pillar.stem)
-        ten_god = f"({code})"
-        god_color = PROFILE_COLORS.get(code, "#718096")
-    else:
-        god_color = elem_color
-    
-    hidden = " ".join([HEAVENLY_STEMS_CN[["Jia","Yi","Bing","Ding","Wu","Ji","Geng","Xin","Ren","Gui"].index(h)] for h in pillar.hidden_stems])
-    
-    cls = "pillar-dm" if is_dm else ("pillar-annual" if is_annual else "")
-    border_color = "#f6ad55" if is_annual else ("#4299e1" if is_dm else "#2d3748")
-    
-    st.markdown(f"""
-    <div class="pillar-card {cls}" style="border-color: {border_color};">
-        <div style="color: #718096; font-size: 0.8em;">{title}</div>
-        <div style="font-size: 2.5em; color: {elem_color}; font-weight: bold;">{pillar.stem_cn}</div>
-        <div style="color: {god_color}; font-size: 0.8em;">{pillar.stem} {pillar.stem_element} {ten_god}</div>
-        <div style="font-size: 2em; margin: 5px 0;">{pillar.branch_cn}</div>
-        <div style="color: #718096; font-size: 0.85em;">{pillar.animal} {pillar.animal_cn}</div>
-        <div style="color: #4a5568; font-size: 0.75em; margin-top: 8px; border-top: 1px dashed #2d3748; padding-top: 8px;">
-            藏干: {hidden}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+SIX_ASPECTS = {
+    "Wealth": {"gods": ["DW", "IW"], "area": "财运", "meaning": "Money, assets, business income, financial opportunities"},
+    "Career": {"gods": ["DO", "7K"], "area": "事业", "meaning": "Job, position, authority, recognition, government relations"},
+    "Resource": {"gods": ["DR", "IR"], "area": "贵人", "meaning": "Support, education, mentors, helpful people, knowledge"},
+    "Output": {"gods": ["EG", "HO"], "area": "表现", "meaning": "Expression, creativity, children, ideas, performance"},
+    "Companion": {"gods": ["F", "RW"], "area": "人际", "meaning": "Friends, siblings, peers, competition, networking"},
+    "Health": {"gods": ["7K", "HO"], "area": "健康", "meaning": "Physical wellness, stress, pressure, vitality"}
+}
 
+# =============================================================================
+# 12-13. STRUCTURES & PROFILES
+# =============================================================================
 
-def display_10_profiles(distribution: dict):
-    """Display 10 Profiles bar chart"""
-    st.markdown("### 10 PROFILES STRENGTH 十神格")
+FIVE_STRUCTURES = {
+    "Wealth": {
+        "gods": ["DW", "IW"], "element": "Wood", "cn": "財型",
+        "description": "Wealth Structure indicates strong focus on financial matters, material acquisition, and resource management.",
+        "strengths": "Good at making money, practical, goal-oriented, business-minded",
+        "careers": "Business, sales, finance, investment, real estate, trading"
+    },
+    "Influence": {
+        "gods": ["DO", "7K"], "element": "Fire", "cn": "官型", 
+        "description": "Influence Structure shows natural authority, leadership ability, and desire for recognition and status.",
+        "strengths": "Leadership, discipline, responsibility, ambition, status-conscious",
+        "careers": "Government, management, politics, law, military, corporate leadership"
+    },
+    "Resource": {
+        "gods": ["DR", "IR"], "element": "Earth", "cn": "印型",
+        "description": "Resource Structure indicates love of learning, need for support, and connection to knowledge and wisdom.",
+        "strengths": "Intellectual, thoughtful, supported by others, good learner, wise",
+        "careers": "Education, research, consulting, writing, advisory, academics"
+    },
+    "Companion": {
+        "gods": ["F", "RW"], "element": "Metal", "cn": "比型",
+        "description": "Companion Structure shows strong peer relationships, competition awareness, and collaborative nature.",
+        "strengths": "Networking, teamwork, competitive, loyal, social",
+        "careers": "Partnerships, team sports, networking businesses, franchises"
+    },
+    "Output": {
+        "gods": ["EG", "HO"], "element": "Water", "cn": "食傷型",
+        "description": "Output Structure indicates creativity, self-expression, and desire to share ideas with the world.",
+        "strengths": "Creative, expressive, innovative, artistic, communicative",
+        "careers": "Arts, entertainment, writing, teaching, marketing, media"
+    }
+}
+
+TEN_PROFILES = {
+    "F": {"name": "The Friend 比肩", "cn": "比肩", "brief": "Collaborative, loyal, peer-focused",
+          "description": "Friends value relationships with peers and equals. You work well in teams and value fairness and reciprocity.",
+          "strengths": "Loyal, fair, cooperative, supportive", "challenges": "Can be too dependent on peers, competitive"},
+    "RW": {"name": "The Leader 劫财", "cn": "劫财", "brief": "Ambitious, competitive, action-oriented",
+           "description": "Rob Wealth types are natural competitors who drive hard for success. You're action-oriented and ambitious.",
+           "strengths": "Driven, ambitious, competitive, bold", "challenges": "Can be aggressive, overspending, risky"},
+    "EG": {"name": "The Artist 食神", "cn": "食神", "brief": "Creative, expressive, pleasure-seeking",
+           "description": "Eating Gods are creative souls who enjoy life's pleasures. You express yourself through art, food, or lifestyle.",
+           "strengths": "Creative, joyful, expressive, talented", "challenges": "Can be indulgent, unfocused, lazy"},
+    "HO": {"name": "The Performer 伤官", "cn": "伤官", "brief": "Innovative, rebellious, outspoken",
+           "description": "Hurting Officers are innovators who challenge the status quo. You're not afraid to speak your mind.",
+           "strengths": "Innovative, brave, talented, expressive", "challenges": "Can be rebellious, critical, disruptive"},
+    "DW": {"name": "The Director 正财", "cn": "正财", "brief": "Practical, steady, financially focused",
+           "description": "Direct Wealth types are practical money managers. You build wealth steadily through hard work.",
+           "strengths": "Practical, reliable, hardworking, stable", "challenges": "Can be materialistic, workaholic"},
+    "IW": {"name": "The Pioneer 偏财", "cn": "偏财", "brief": "Opportunistic, risk-taking, entrepreneurial",
+           "description": "Indirect Wealth types spot opportunities others miss. You're entrepreneurial and willing to take calculated risks.",
+           "strengths": "Opportunistic, bold, visionary, adaptable", "challenges": "Can be risky, unstable, speculative"},
+    "DO": {"name": "The Diplomat 正官", "cn": "正官", "brief": "Disciplined, responsible, status-conscious",
+           "description": "Direct Officers value order, rules, and proper conduct. You excel in structured environments.",
+           "strengths": "Disciplined, responsible, respected, ethical", "challenges": "Can be rigid, status-obsessed"},
+    "7K": {"name": "The Warrior 七杀", "cn": "七杀", "brief": "Powerful, intense, transformative",
+           "description": "Seven Killings types are intense and powerful. You transform through pressure and challenge.",
+           "strengths": "Powerful, determined, resilient, transformative", "challenges": "Can be aggressive, stressed"},
+    "DR": {"name": "The Analyzer 正印", "cn": "正印", "brief": "Thoughtful, supported, knowledge-seeking",
+           "description": "Direct Resource types love learning and are supported by others. You analyze before acting.",
+           "strengths": "Thoughtful, supported, wise, caring", "challenges": "Can be passive, overthinking"},
+    "IR": {"name": "The Philosopher 偏印", "cn": "偏印", "brief": "Unconventional, intuitive, independent",
+           "description": "Indirect Resource types think differently. You have unique insights and unconventional wisdom.",
+           "strengths": "Innovative, intuitive, independent, unique", "challenges": "Can be isolated, eccentric"}
+}
+
+# =============================================================================
+# 11. MONTHLY ELEMENTS 2025
+# =============================================================================
+
+MONTHLY_STEMS_2025 = {
+    1: ("Ding", "Chou", "丁丑", "Yin Fire on Earth"), 2: ("Wu", "Yin", "戊寅", "Yang Earth on Wood"),
+    3: ("Ji", "Mao", "己卯", "Yin Earth on Wood"), 4: ("Geng", "Chen", "庚辰", "Yang Metal on Earth"),
+    5: ("Xin", "Si", "辛巳", "Yin Metal on Fire"), 6: ("Ren", "Wu", "壬午", "Yang Water on Fire"),
+    7: ("Gui", "Wei", "癸未", "Yin Water on Earth"), 8: ("Jia", "Shen", "甲申", "Yang Wood on Metal"),
+    9: ("Yi", "You", "乙酉", "Yin Wood on Metal"), 10: ("Bing", "Xu", "丙戌", "Yang Fire on Earth"),
+    11: ("Ding", "Hai", "丁亥", "Yin Fire on Water"), 12: ("Wu", "Zi", "戊子", "Yang Earth on Water")
+}
+
+# =============================================================================
+# CALCULATION FUNCTIONS
+# =============================================================================
+
+def calc_year_pillar(year):
+    idx = (year - 1984) % 60
+    return STEMS[idx % 10], BRANCHES[idx % 12]
+
+def calc_month_pillar(year, month):
+    # Simplified - for demo
+    year_stem_idx = (year - 1984) % 10
+    base = (year_stem_idx * 2 + 2) % 10
+    stem_idx = (base + month - 1) % 10
+    branch_idx = (month + 1) % 12
+    return STEMS[stem_idx], BRANCHES[branch_idx]
+
+def calc_day_pillar(dt):
+    ref = date(1900, 1, 1)
+    days = (dt - ref).days
+    return STEMS[days % 10], BRANCHES[(days + 10) % 12]
+
+def calc_hour_pillar(hour, day_stem):
+    branch_idx = 0 if hour == 23 else ((hour + 1) // 2) % 12
+    day_idx = STEMS.index(day_stem)
+    stem_idx = (day_idx * 2 + branch_idx) % 10
+    return STEMS[stem_idx], BRANCHES[branch_idx]
+
+def get_10_god(dm, stem):
+    dm_elem, dm_pol = STEM_ELEM[dm], STEM_POL[dm]
+    s_elem, s_pol = STEM_ELEM[stem], STEM_POL[stem]
+    same_pol = dm_pol == s_pol
     
-    sorted_profiles = sorted(distribution.items(), key=lambda x: x[1], reverse=True)
+    produces = {"Wood":"Fire","Fire":"Earth","Earth":"Metal","Metal":"Water","Water":"Wood"}
+    controls = {"Wood":"Earth","Earth":"Water","Water":"Fire","Fire":"Metal","Metal":"Wood"}
     
-    for code, pct in sorted_profiles:
-        if pct <= 0:
-            continue
-        color = PROFILE_COLORS.get(code, "#718096")
-        name = PROFILE_NAMES.get(code, code)
-        width = max(pct, 5)
+    if dm_elem == s_elem:
+        return "F" if same_pol else "RW"
+    for k,v in produces.items():
+        if v == dm_elem and k == s_elem:
+            return "IR" if same_pol else "DR"
+    if produces.get(dm_elem) == s_elem:
+        return "EG" if same_pol else "HO"
+    if controls.get(dm_elem) == s_elem:
+        return "IW" if same_pol else "DW"
+    for k,v in controls.items():
+        if v == dm_elem and k == s_elem:
+            return "7K" if same_pol else "DO"
+    return "?"
+
+def calc_dm_strength(pillars, dm):
+    dm_elem = STEM_ELEM[dm]
+    support, oppose = 0, 0
+    
+    produces = {"Wood":"Fire","Fire":"Earth","Earth":"Metal","Metal":"Water","Water":"Wood"}
+    controls = {"Wood":"Earth","Earth":"Water","Water":"Fire","Fire":"Metal","Metal":"Wood"}
+    
+    # Check all elements in chart
+    for p in pillars:
+        s_elem = STEM_ELEM[p["stem"]]
+        b_elem = BRANCH_ELEM[p["branch"]]
         
-        st.markdown(f"""
-        <div style="display: flex; align-items: center; margin: 5px 0;">
-            <div style="width: 35px; color: #a0aec0; font-size: 0.85em; font-weight: bold;">{code}</div>
-            <div style="flex: 1; margin: 0 10px;">
-                <div class="profile-bar">
-                    <div style="width: {width}%; height: 100%; background: {color}; border-radius: 5px; display: flex; align-items: center; padding-left: 10px; color: white; font-size: 0.8em;">
-                        {name}
-                    </div>
-                </div>
-            </div>
-            <div style="width: 50px; color: {color}; font-weight: bold; text-align: right;">{pct:.0f}%</div>
-        </div>
-        """, unsafe_allow_html=True)
+        for elem in [s_elem, b_elem]:
+            if elem == dm_elem:
+                support += 1.5
+            elif produces.get(elem) == dm_elem:
+                support += 1
+            elif controls.get(elem) == dm_elem:
+                oppose += 1.5
+            elif produces.get(dm_elem) == elem:
+                oppose += 1
+    
+    total = support + oppose
+    pct = (support / total * 100) if total > 0 else 50
+    
+    if pct >= 60: cat = "Strong"
+    elif pct >= 55: cat = "Slightly Strong"
+    elif pct <= 40: cat = "Weak"
+    elif pct <= 45: cat = "Slightly Weak"
+    else: cat = "Balanced"
+    
+    return round(pct, 1), cat
 
-
-def display_5_structures(distribution: dict):
-    """Display 5 Structures visualization"""
-    st.markdown("### 5 STRUCTURES 五型格")
+def get_useful_gods(strength_cat, dm_elem):
+    produces = {"Wood":"Fire","Fire":"Earth","Earth":"Metal","Metal":"Water","Water":"Wood"}
+    produced_by = {v:k for k,v in produces.items()}
+    controls = {"Wood":"Earth","Earth":"Water","Water":"Fire","Fire":"Metal","Metal":"Wood"}
+    controlled_by = {v:k for k,v in controls.items()}
     
-    structures = {}
-    for name, gods in STRUCTURE_MAPPING.items():
-        structures[name] = sum(distribution.get(g, 0) for g in gods)
-    
-    struct_info = {
-        "Wealth": ("木 WOOD", "管理型"), "Influence": ("火 FIRE", "忠誠型"),
-        "Resources": ("土 EARTH", "智慧型"), "Companion": ("金 METAL", "交際型"),
-        "Output": ("水 WATER", "創作型")
-    }
-    
-    cols = st.columns(5)
-    for i, name in enumerate(["Wealth", "Influence", "Resources", "Companion", "Output"]):
-        with cols[i]:
-            pct = structures.get(name, 0)
-            color = STRUCTURE_COLORS.get(name, "#718096")
-            elem, cn = struct_info[name]
-            height = int(pct * 1.2) + 20
-            
-            st.markdown(f"""
-            <div style="text-align: center;">
-                <div style="color: {color}; font-weight: bold; font-size: 0.85em;">{elem}</div>
-                <div style="background: #1a2744; border-radius: 5px; height: 80px; position: relative; margin: 8px auto; width: 50px;">
-                    <div style="position: absolute; bottom: 0; width: 100%; height: {min(height, 80)}px; background: {color}; border-radius: 5px;"></div>
-                </div>
-                <div style="color: #a0aec0; font-size: 0.7em;">{cn}</div>
-                <div style="color: {color}; font-weight: bold;">{pct:.0f}%</div>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    main = max(structures.items(), key=lambda x: x[1])[0]
-    st.caption(f"**Main Structure:** {struct_info[main][1]} {main}")
-
-
-def display_luck_pillars(luck_pillars, day_master: str):
-    """Display luck pillars in a row"""
-    cols = st.columns(min(len(luck_pillars), 10))
-    
-    for i, lp in enumerate(luck_pillars[:10]):
-        with cols[i]:
-            cls = "luck-current" if lp.is_current else ""
-            code, _, _ = get_ten_god(day_master, lp.stem)
-            color = PROFILE_COLORS.get(code, "#718096")
-            
-            st.markdown(f"""
-            <div class="luck-pillar {cls}">
-                <div style="font-size: 0.65em; color: #718096;">{lp.age_start}-{lp.age_end}</div>
-                <div style="font-size: 1.4em; color: {color};">{lp.stem_cn}</div>
-                <div style="font-size: 1.1em;">{lp.branch_cn}</div>
-                <div style="font-size: 0.65em; color: #718096;">{lp.animal}</div>
-                <div style="font-size: 0.65em; color: {color};">{code}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-
-def display_annual_analysis(chart: BaZiChart, annual_year: int):
-    """Display annual pillar analysis"""
-    if not chart.annual_pillar:
-        return
-    
-    ap = chart.annual_pillar
-    dm = chart.day_master
-    
-    # Get 10 God for annual stem
-    code, name, cn = get_ten_god(dm, ap.stem)
-    color = PROFILE_COLORS.get(code, "#718096")
-    
-    st.markdown(f"""
-    <div class="annual-card">
-        <div style="color: #f6ad55; font-size: 0.9em;">📅 {annual_year} ANNUAL PILLAR 流年</div>
-        <div style="font-size: 2em; color: {ELEMENT_COLORS.get(ap.stem_element, '#fff')}; font-weight: bold; margin: 5px 0;">
-            {ap.stem_cn} {ap.branch_cn}
-        </div>
-        <div style="color: #a0aec0;">
-            {ap.stem} {ap.stem_element} • {ap.animal} {ap.animal_cn}
-        </div>
-        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #4a5568;">
-            <span style="color: {color}; font-weight: bold;">10 God: {code} {name} {cn}</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Annual influence interpretation
-    st.markdown("#### 📊 Annual Influence")
-    
-    interpretations = {
-        "F": "Year of **peers and competition**. Network actively, watch for rivalry.",
-        "RW": "Year of **expenditure and socializing**. Control spending, build connections.",
-        "IR": "Year of **learning and innovation**. Study, but watch for overthinking.",
-        "DR": "Year of **support and guidance**. Seek mentors, academic pursuits favored.",
-        "EG": "Year of **creativity and expression**. Create, but avoid overindulgence.",
-        "HO": "Year of **performance and change**. Speak up, manage reputation.",
-        "IW": "Year of **opportunity and action**. Take calculated risks for wealth.",
-        "DW": "Year of **steady income**. Good for traditional business, marriage matters.",
-        "7K": "Year of **pressure and transformation**. Face challenges, emerge stronger.",
-        "DO": "Year of **recognition and authority**. Career advancement, follow rules."
-    }
-    
-    st.info(interpretations.get(code, "Analyze based on your specific chart context."))
-    
-    # Element interaction with DM
-    annual_elem = ap.stem_element
-    dm_elem = chart.day_master_element
-    
-    if annual_elem in chart.useful_gods:
-        st.success(f"✅ {annual_year}'s {annual_elem} element is your **Useful God** - favorable year!")
-    elif annual_elem in chart.unfavorable_elements:
-        st.warning(f"⚠️ {annual_year}'s {annual_elem} element is **Unfavorable** - exercise caution.")
+    if "Weak" in strength_cat:
+        useful = [dm_elem, produced_by.get(dm_elem, "")]
+        unfav = [produces.get(dm_elem, ""), controlled_by.get(dm_elem, "")]
+    elif "Strong" in strength_cat:
+        useful = [produces.get(dm_elem, ""), controlled_by.get(dm_elem, "")]
+        unfav = [dm_elem, produced_by.get(dm_elem, "")]
     else:
-        st.info(f"📌 {annual_year}'s {annual_elem} element is neutral for your chart.")
-
+        useful = [dm_elem]
+        unfav = []
+    
+    return [u for u in useful if u], [u for u in unfav if u]
 
 # =============================================================================
-# MAIN
+# MAIN APP
 # =============================================================================
 
 def main():
-    st.title("🎴 BaZi Analysis")
-    st.caption("Four Pillars of Destiny • Professional Analysis with Annual Overlay")
+    st.title("🎴 BaZi Pro Analysis")
+    st.caption("Complete Four Pillars Analysis with Full Interpretations")
     
-    if not BAZI_OK:
-        st.error(f"Module error: {IMPORT_ERR}")
-        return
-    
-    current_year = date.today().year
-    
+    # Sidebar
     with st.sidebar:
         st.header("🎂 Birth Information")
         
-        saved = st.session_state.get("bazi_birth_info", {})
+        saved = st.session_state.get("bazi_info", {})
+        birth_date = st.date_input("Birth Date", saved.get("date", date(1978, 6, 27)))
         
-        birth_date = st.date_input("Birth Date", value=saved.get("date", date(1978, 6, 27)))
-        
-        unknown = st.checkbox("Unknown birth time")
-        if unknown:
-            st.info("Using 12:00 noon")
-            birth_hour, birth_minute = 12, 0
+        unknown_time = st.checkbox("Unknown birth time")
+        if unknown_time:
+            birth_hour = 12
+            st.warning("⚠️ Using noon - Hour pillar may be inaccurate")
         else:
-            col1, col2 = st.columns(2)
-            with col1:
-                birth_hour = st.selectbox("Hour", range(24), index=saved.get("hour", 20), format_func=lambda x: f"{x:02d}")
-            with col2:
-                birth_minute = st.selectbox("Min", range(60), index=saved.get("minute", 8), format_func=lambda x: f"{x:02d}")
+            birth_hour = st.selectbox("Hour", range(24), saved.get("hour", 20))
         
         gender = st.radio("Gender", ["Male", "Female"], horizontal=True)
-        gender_code = "M" if gender == "Male" else "F"
-        
-        st.divider()
-        
-        # Annual year selection
-        st.subheader("📅 Annual Overlay")
-        annual_year = st.selectbox("Year to analyze", 
-                                   options=list(range(current_year - 5, current_year + 11)),
-                                   index=5)  # Default to current year
         
         st.divider()
         calc_btn = st.button("🔮 Calculate BaZi", type="primary", use_container_width=True)
     
     # Main content
-    if calc_btn or st.session_state.get("bazi_chart"):
+    if calc_btn or st.session_state.get("bazi_calc"):
         if calc_btn:
-            chart = calculate_bazi_chart(
-                birth_date, birth_hour, birth_minute, gender_code,
-                current_year=annual_year, include_annual=True
-            )
-            st.session_state.bazi_chart = chart
-            st.session_state.bazi_birth_info = {
-                "date": birth_date, "hour": birth_hour, "minute": birth_minute
+            # Calculate pillars
+            y_stem, y_branch = calc_year_pillar(birth_date.year)
+            m_stem, m_branch = calc_month_pillar(birth_date.year, birth_date.month)
+            d_stem, d_branch = calc_day_pillar(birth_date)
+            h_stem, h_branch = calc_hour_pillar(birth_hour, d_stem)
+            
+            pillars = [
+                {"name": "Year", "stem": y_stem, "branch": y_branch},
+                {"name": "Month", "stem": m_stem, "branch": m_branch},
+                {"name": "Day", "stem": d_stem, "branch": d_branch},
+                {"name": "Hour", "stem": h_stem, "branch": h_branch}
+            ]
+            
+            dm = d_stem
+            dm_elem = STEM_ELEM[dm]
+            strength_pct, strength_cat = calc_dm_strength(pillars, dm)
+            useful, unfav = get_useful_gods(strength_cat, dm_elem)
+            
+            # Calculate 10 Gods distribution
+            gods_dist = {k: 0 for k in TEN_PROFILES.keys()}
+            for p in pillars:
+                if p["stem"] != dm:
+                    god = get_10_god(dm, p["stem"])
+                    if god in gods_dist:
+                        gods_dist[god] += 10
+                for hs in HIDDEN.get(p["branch"], []):
+                    god = get_10_god(dm, hs)
+                    if god in gods_dist:
+                        gods_dist[god] += 5
+            
+            # Normalize
+            total = sum(gods_dist.values())
+            if total > 0:
+                gods_dist = {k: round(v/total*100, 1) for k,v in gods_dist.items()}
+            
+            # Find main profile
+            main_profile = max(gods_dist, key=gods_dist.get)
+            
+            # Save to session
+            st.session_state.bazi_calc = True
+            st.session_state.bazi_info = {"date": birth_date, "hour": birth_hour}
+            st.session_state.bazi_data = {
+                "pillars": pillars, "dm": dm, "dm_elem": dm_elem,
+                "strength_pct": strength_pct, "strength_cat": strength_cat,
+                "useful": useful, "unfav": unfav,
+                "gods_dist": gods_dist, "main_profile": main_profile,
+                "gender": gender
             }
+            
+            # Also save for other pages
             st.session_state.user_profile = {
-                "day_master": chart.day_master,
-                "day_master_cn": chart.day_pillar.stem_cn,
-                "element": chart.day_master_element,
-                "polarity": chart.day_master_polarity,
-                "strength": chart.strength_category,
-                "strength_pct": chart.dm_strength,
-                "useful_gods": chart.useful_gods,
-                "unfavorable": chart.unfavorable_elements,
-                "profile": chart.main_profile
+                "day_master": dm, "element": dm_elem,
+                "strength": strength_cat, "useful_gods": useful,
+                "unfavorable": unfav, "profile": TEN_PROFILES[main_profile]["name"]
             }
-        else:
-            chart = st.session_state.bazi_chart
+            st.session_state.bazi_birth_info = {"date": birth_date, "hour": birth_hour}
         
-        # Day Master Header
-        elem_color = ELEMENT_COLORS[chart.day_master_element]
-        st.markdown(f"""
-        <div class="dm-card">
-            <div style="color: #718096;">DAY MASTER 日主</div>
-            <div style="font-size: 2.5em; color: {elem_color}; font-weight: bold;">{chart.day_pillar.stem_cn} {chart.day_master}</div>
-            <div style="color: #a0aec0;">{chart.day_master_polarity} {chart.day_master_element} • {chart.main_profile}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        data = st.session_state.bazi_data
+        pillars = data["pillars"]
+        dm = data["dm"]
+        dm_elem = data["dm_elem"]
+        
+        # =====================================================================
+        # 1. DAY MASTER SECTION
+        # =====================================================================
+        st.header("1️⃣ DAY MASTER 日主")
+        
+        dm_info = DAY_MASTER_INFO.get(dm, {})
+        dm_cn = STEMS_CN[STEMS.index(dm)]
+        
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            st.markdown(f"""
+            ### {dm_info.get('image', '')}
+            ## {dm} {dm_cn}
+            **{dm_elem} • {STEM_POL[dm]}**
+            """)
+            
+            # Strength bar
+            pct = data["strength_pct"]
+            st.metric("Strength", f"{data['strength_cat']} ({pct}%)")
+            st.progress(pct/100)
+        
+        with col2:
+            st.markdown(dm_info.get("personality", ""))
+            
+            with st.expander("💼 Career & Relationship"):
+                st.markdown(f"**Career:** {dm_info.get('career', '')}")
+                st.markdown(f"**Relationship:** {dm_info.get('relationship', '')}")
         
         st.divider()
         
-        # Four Pillars + Annual
-        st.subheader("📊 Four Pillars + Annual Overlay 四柱 + 流年")
+        # =====================================================================
+        # 3-4. FAVORABLE & UNFAVORABLE DIRECTIONS
+        # =====================================================================
+        st.header("3️⃣ FAVORABLE & 4️⃣ UNFAVORABLE DIRECTIONS")
         
-        cols = st.columns(5)
-        pillars = [
-            (chart.hour_pillar, "Hour 時", False, False),
-            (chart.day_pillar, "Day 日 ★", True, False),
-            (chart.month_pillar, "Month 月", False, False),
-            (chart.year_pillar, "Year 年", False, False),
-            (chart.annual_pillar, f"{annual_year} 流年", False, True) if chart.annual_pillar else (None, "", False, False)
-        ]
-        
-        for i, (p, title, is_dm, is_annual) in enumerate(pillars):
-            if p:
-                with cols[i]:
-                    display_pillar(p, title, is_dm, is_annual, chart.day_master)
-        
-        st.divider()
-        
-        # Strength & Useful Gods + Annual Analysis
         col1, col2 = st.columns(2)
         
         with col1:
-            st.subheader("💪 Day Master Strength")
-            pct = chart.dm_strength
-            opp = 100 - pct
-            color = "#48bb78" if pct >= 55 else ("#f56565" if pct <= 45 else "#ecc94b")
-            
-            st.markdown(f"""
-            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                <span style="color: #48bb78;">Supporting: {pct:.0f}%</span>
-                <span style="color: #f56565;">Opposing: {opp:.0f}%</span>
-            </div>
-            <div style="background: #1a2744; border-radius: 10px; height: 30px; overflow: hidden;">
-                <div style="width: {pct}%; height: 100%; background: linear-gradient(90deg, #48bb78, {color}); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-                    {chart.strength_category}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown(f"**Useful Gods 用神:** {', '.join(chart.useful_gods)}")
-            if chart.unfavorable_elements:
-                st.markdown(f"**Unfavorable 忌神:** {', '.join(chart.unfavorable_elements)}")
-            
-            st.caption(f"Luck Pillar starts at age {chart.luck_pillar_start_age}")
+            st.subheader("✅ Favorable 吉方")
+            for elem in data["useful"]:
+                dir_info = ELEMENT_DIRECTIONS.get(elem, {})
+                st.success(f"""
+                **{elem}** {dir_info.get('direction_cn', '')}
+                - Directions: {', '.join(dir_info.get('favorable', []))}
+                - Colors: {dir_info.get('color', '')}
+                - Numbers: {dir_info.get('number', '')}
+                """)
         
         with col2:
-            display_annual_analysis(chart, annual_year)
+            st.subheader("❌ Unfavorable 凶方")
+            for elem in data["unfav"]:
+                dir_info = ELEMENT_DIRECTIONS.get(elem, {})
+                st.error(f"""
+                **{elem}** {dir_info.get('direction_cn', '')}
+                - Directions: {', '.join(dir_info.get('favorable', []))}
+                - Colors: {dir_info.get('color', '')}
+                - Numbers: {dir_info.get('number', '')}
+                """)
         
         st.divider()
         
-        # 5 Structures + 10 Profiles
+        # =====================================================================
+        # 5. FOUR PILLARS WITH HIDDEN STEMS
+        # =====================================================================
+        st.header("5️⃣ FOUR PILLARS & HIDDEN STEMS 四柱藏干")
+        
+        cols = st.columns(4)
+        for i, p in enumerate(pillars):
+            with cols[i]:
+                s_idx = STEMS.index(p["stem"])
+                b_idx = BRANCHES.index(p["branch"])
+                s_elem = STEM_ELEM[p["stem"]]
+                
+                # 10 God
+                if p["stem"] == dm:
+                    god_display = "★ Day Master"
+                else:
+                    god = get_10_god(dm, p["stem"])
+                    god_display = TEN_PROFILES.get(god, {}).get("name", god)
+                
+                st.markdown(f"### {p['name']} 柱")
+                st.info(f"""
+                **{STEMS_CN[s_idx]} {BRANCHES_CN[b_idx]}**
+                
+                {p['stem']} {p['branch']}
+                
+                {ANIMALS[b_idx]}
+                """)
+                
+                st.caption(f"{s_elem} | {god_display}")
+                
+                # Hidden stems
+                hidden = HIDDEN.get(p["branch"], [])
+                st.markdown("**Hidden 藏干:**")
+                for hs in hidden:
+                    hs_god = get_10_god(dm, hs)
+                    st.caption(f"• {hs} {STEMS_CN[STEMS.index(hs)]} ({hs_god})")
+        
+        st.divider()
+        
+        # =====================================================================
+        # 6 & 8. ANNUAL PILLAR 2025
+        # =====================================================================
+        st.header("6️⃣ 2025 ANNUAL PILLAR 流年 & 8️⃣ ANNUAL STAR")
+        
+        annual_stem, annual_branch = "Yi", "Si"  # 2025 = Yi Si
+        annual_god = get_10_god(dm, annual_stem)
+        annual_info = TEN_PROFILES.get(annual_god, {})
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f"""
+            ### 2025 乙巳 Yi Si (Wood Snake)
+            
+            **Annual Element:** Wood (Yin)
+            
+            **Your 10 God for 2025:** {annual_god} {annual_info.get('name', '')}
+            """)
+            
+            # Is it favorable?
+            if "Wood" in data["useful"]:
+                st.success("✅ 2025's Wood element is FAVORABLE for you!")
+            elif "Wood" in data["unfav"]:
+                st.error("⚠️ 2025's Wood element is UNFAVORABLE - exercise caution")
+            else:
+                st.info("📌 2025's Wood element is NEUTRAL for you")
+        
+        with col2:
+            st.markdown(f"""
+            ### Annual Theme: {annual_info.get('name', '')}
+            
+            {annual_info.get('description', '')}
+            
+            **Strengths this year:** {annual_info.get('strengths', '')}
+            
+            **Watch out for:** {annual_info.get('challenges', '')}
+            """)
+        
+        st.divider()
+        
+        # =====================================================================
+        # 7. MOBILITY DIRECTIONS 2025
+        # =====================================================================
+        st.header("7️⃣ 2025 MOBILITY DIRECTIONS 出行方位")
+        
+        st.markdown("""
+        Based on your useful elements and 2025's annual energy:
+        """)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.success(f"""
+            ### ✅ GO TO
+            **{', '.join(data['useful'])} directions**
+            
+            Best for: Travel, business, opportunities
+            """)
+        with col2:
+            st.warning(f"""
+            ### ⚡ CAUTION
+            **Wood (East/SE) in 2025**
+            
+            Snake year energy - watch for obstacles
+            """)
+        with col3:
+            st.error(f"""
+            ### ❌ AVOID
+            **{', '.join(data['unfav'])} directions**
+            
+            May bring challenges or setbacks
+            """)
+        
+        st.divider()
+        
+        # =====================================================================
+        # 10. SIX ASPECTS
+        # =====================================================================
+        st.header("🔟 SIX ASPECTS 六神")
+        
+        gods_dist = data["gods_dist"]
+        
+        cols = st.columns(3)
+        for i, (aspect, info) in enumerate(SIX_ASPECTS.items()):
+            with cols[i % 3]:
+                score = sum(gods_dist.get(g, 0) for g in info["gods"])
+                
+                if score >= 20:
+                    st.success(f"""
+                    ### {aspect} {info['area']}
+                    **Score: {score:.0f}%** ⬆️ Strong
+                    
+                    {info['meaning']}
+                    """)
+                elif score >= 10:
+                    st.info(f"""
+                    ### {aspect} {info['area']}
+                    **Score: {score:.0f}%** ➡️ Moderate
+                    
+                    {info['meaning']}
+                    """)
+                else:
+                    st.warning(f"""
+                    ### {aspect} {info['area']}
+                    **Score: {score:.0f}%** ⬇️ Weak
+                    
+                    {info['meaning']}
+                    """)
+        
+        st.divider()
+        
+        # =====================================================================
+        # 11. MONTHLY INFLUENCE 2025
+        # =====================================================================
+        st.header("1️⃣1️⃣ 2025 MONTHLY INFLUENCE 月运")
+        
+        st.markdown("How each month of 2025 affects you based on your Day Master:")
+        
+        cols = st.columns(4)
+        for month in range(1, 13):
+            with cols[(month-1) % 4]:
+                m_stem, m_branch, m_cn, m_desc = MONTHLY_STEMS_2025[month]
+                m_god = get_10_god(dm, m_stem)
+                m_elem = STEM_ELEM[m_stem]
+                
+                # Determine favorability
+                if m_elem in data["useful"]:
+                    st.success(f"""
+                    **{month}月 {m_cn}**
+                    {m_god} - Favorable ✅
+                    """)
+                elif m_elem in data["unfav"]:
+                    st.error(f"""
+                    **{month}月 {m_cn}**
+                    {m_god} - Caution ⚠️
+                    """)
+                else:
+                    st.info(f"""
+                    **{month}月 {m_cn}**
+                    {m_god} - Neutral 📌
+                    """)
+        
+        st.divider()
+        
+        # =====================================================================
+        # 12. FIVE STRUCTURES
+        # =====================================================================
+        st.header("1️⃣2️⃣ FIVE STRUCTURES 五型格")
+        
+        # Calculate structure scores
+        struct_scores = {}
+        for name, info in FIVE_STRUCTURES.items():
+            struct_scores[name] = sum(gods_dist.get(g, 0) for g in info["gods"])
+        
+        main_struct = max(struct_scores, key=struct_scores.get)
+        
         col1, col2 = st.columns([1, 2])
         
         with col1:
-            display_5_structures(chart.ten_gods_distribution)
+            st.markdown("### Structure Strength")
+            for name, score in sorted(struct_scores.items(), key=lambda x: x[1], reverse=True):
+                st.progress(score/100 if score <= 100 else 1.0)
+                st.caption(f"{name}: {score:.0f}%")
         
         with col2:
-            display_10_profiles(chart.ten_gods_distribution)
+            main_info = FIVE_STRUCTURES[main_struct]
+            st.markdown(f"""
+            ### Your Main Structure: {main_struct} {main_info['cn']}
+            
+            {main_info['description']}
+            
+            **Strengths:** {main_info['strengths']}
+            
+            **Best Careers:** {main_info['careers']}
+            """)
         
         st.divider()
         
-        # Luck Pillars
-        st.subheader("🎯 10-Year Luck Pillars 大運")
-        display_luck_pillars(chart.luck_pillars, chart.day_master)
+        # =====================================================================
+        # 13. TEN PROFILES
+        # =====================================================================
+        st.header("1️⃣3️⃣ TEN PROFILES 十神格")
         
-        st.divider()
+        # Sort by score
+        sorted_profiles = sorted(gods_dist.items(), key=lambda x: x[1], reverse=True)
+        main_profile = sorted_profiles[0][0]
         
-        # Symbolic Stars + Palaces
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns([1, 2])
         
         with col1:
-            st.subheader("⭐ Symbolic Stars 神煞")
-            for star, val in chart.symbolic_stars.items():
-                st.markdown(f"**{star}:** {val}")
+            st.markdown("### Profile Strength")
+            for god, score in sorted_profiles:
+                if score > 0:
+                    info = TEN_PROFILES.get(god, {})
+                    st.progress(score/100 if score <= 100 else 1.0)
+                    st.caption(f"{god} {info.get('cn', '')}: {score:.0f}%")
         
         with col2:
-            st.subheader("🏛️ Special Palaces")
-            if chart.life_palace:
-                lp_cn = HEAVENLY_STEMS_CN[["Jia","Yi","Bing","Ding","Wu","Ji","Geng","Xin","Ren","Gui"].index(chart.life_palace[0])]
-                lp_bcn = EARTHLY_BRANCHES_CN[["Zi","Chou","Yin","Mao","Chen","Si","Wu","Wei","Shen","You","Xu","Hai"].index(chart.life_palace[1])]
-                st.markdown(f"**Life Palace 命宮:** {lp_cn}{lp_bcn}")
-            if chart.conception_palace:
-                cp_cn = HEAVENLY_STEMS_CN[["Jia","Yi","Bing","Ding","Wu","Ji","Geng","Xin","Ren","Gui"].index(chart.conception_palace[0])]
-                cp_bcn = EARTHLY_BRANCHES_CN[["Zi","Chou","Yin","Mao","Chen","Si","Wu","Wei","Shen","You","Xu","Hai"].index(chart.conception_palace[1])]
-                st.markdown(f"**Conception Palace 胎元:** {cp_cn}{cp_bcn}")
+            main_info = TEN_PROFILES[main_profile]
+            st.markdown(f"""
+            ### Your Main Profile: {main_info['name']}
+            
+            {main_info['description']}
+            
+            **Strengths:** {main_info['strengths']}
+            
+            **Challenges:** {main_info['challenges']}
+            """)
+            
+            # Secondary profile
+            if len(sorted_profiles) > 1 and sorted_profiles[1][1] > 5:
+                sec_god = sorted_profiles[1][0]
+                sec_info = TEN_PROFILES[sec_god]
+                st.markdown(f"""
+                ---
+                **Secondary Profile:** {sec_info['name']}
+                
+                {sec_info['brief']}
+                """)
         
         st.divider()
         
-        # Export
-        st.subheader("📤 Export")
-        col1, col2, col3 = st.columns(3)
+        # =====================================================================
+        # EXPORT
+        # =====================================================================
+        st.header("📤 Export Analysis")
         
-        with col1:
-            json_data = json.dumps(chart_to_dict(chart), indent=2, default=str)
-            st.download_button("📊 Download JSON", json_data, f"bazi_{birth_date}.json", "application/json", use_container_width=True)
-        
-        with col2:
-            if st.button("🤖 AI Analysis Prompt", use_container_width=True):
-                st.session_state.show_prompt = True
-        
-        with col3:
-            st.button("📄 PDF Report", use_container_width=True, disabled=True)
-            st.caption("Coming soon")
-        
-        if st.session_state.get("show_prompt"):
-            prompt = f"""Analyze this BaZi chart:
+        if st.button("🤖 Generate AI Analysis Prompt", use_container_width=True):
+            prompt = f"""Complete BaZi Analysis for {birth_date} at {birth_hour}:00
 
-**Birth:** {birth_date} at {birth_hour:02d}:{birth_minute:02d} ({gender})
+**DAY MASTER:** {dm} {STEMS_CN[STEMS.index(dm)]} ({dm_elem})
+**Strength:** {data['strength_cat']} ({data['strength_pct']}%)
 
-**Four Pillars:**
-- Year: {chart.year_pillar.stem_cn} {chart.year_pillar.branch_cn} ({chart.year_pillar.animal})
-- Month: {chart.month_pillar.stem_cn} {chart.month_pillar.branch_cn} ({chart.month_pillar.animal})
-- Day: {chart.day_pillar.stem_cn} {chart.day_pillar.branch_cn} ({chart.day_pillar.animal}) ← Day Master
-- Hour: {chart.hour_pillar.stem_cn} {chart.hour_pillar.branch_cn} ({chart.hour_pillar.animal})
+**FOUR PILLARS:**
+- Year: {pillars[0]['stem']} {pillars[0]['branch']}
+- Month: {pillars[1]['stem']} {pillars[1]['branch']}
+- Day: {pillars[2]['stem']} {pillars[2]['branch']} ← Day Master
+- Hour: {pillars[3]['stem']} {pillars[3]['branch']}
 
-**Day Master:** {chart.day_master} {chart.day_pillar.stem_cn} ({chart.day_master_polarity} {chart.day_master_element})
-**Strength:** {chart.strength_category} ({chart.dm_strength:.0f}%)
-**Useful Gods:** {', '.join(chart.useful_gods)}
-**Main Profile:** {chart.main_profile}
+**USEFUL GODS:** {', '.join(data['useful'])}
+**UNFAVORABLE:** {', '.join(data['unfav'])}
 
-**{annual_year} Annual Pillar:** {chart.annual_pillar.stem_cn} {chart.annual_pillar.branch_cn} ({chart.annual_pillar.animal})
+**MAIN PROFILE:** {TEN_PROFILES[main_profile]['name']}
+**MAIN STRUCTURE:** {main_struct}
 
-**10 Gods Distribution:** {chart.ten_gods_distribution}
+**10 GODS DISTRIBUTION:** {gods_dist}
 
-Please provide:
-1. Day Master personality analysis
-2. Chart structure interpretation
-3. Useful God strategy
-4. {annual_year} annual forecast
-5. Career & wealth potential
-6. Relationship insights
-7. Key life advice"""
+**2025 OUTLOOK:**
+- Annual Pillar: Yi Si (Wood Snake)
+- 10 God for 2025: {annual_god} {annual_info.get('name', '')}
+- Wood is {'FAVORABLE' if 'Wood' in data['useful'] else 'UNFAVORABLE' if 'Wood' in data['unfav'] else 'NEUTRAL'} for this chart
+
+Please provide comprehensive analysis covering all 13 areas."""
             
             st.code(prompt, language="markdown")
-            st.info("Copy and paste to Claude for detailed analysis")
     
     else:
-        st.info("👈 Enter birth info and click **Calculate BaZi**")
+        st.info("👈 Enter birth info and click **Calculate BaZi** to begin")
         
-        with st.expander("ℹ️ What's New in v10.1"):
+        with st.expander("📋 What This Page Covers"):
             st.markdown("""
-            **Improvements:**
-            - ✅ Accurate solar term calculations for month pillar
-            - ✅ Proper luck pillar start age calculation
-            - ✅ **Annual Pillar Overlay** - see how any year affects your chart
-            - ✅ Better DM strength calculation (seasonal weighting)
-            - ✅ Fixed 10 Gods distribution accuracy
+            **Complete BaZi Analysis includes:**
             
-            **Annual Overlay Feature:**
-            - Select any year (past or future) to see its influence
-            - Shows the 10 God relationship with your Day Master
-            - Provides interpretation of annual themes
-            - Indicates whether the year element is favorable for you
+            1. ✅ Day Master personality & traits
+            2. ✅ Qi Men Destiny Palace (see Destiny page)
+            3. ✅ Favorable directions based on useful gods
+            4. ✅ Unfavorable directions to avoid
+            5. ✅ Four Pillars with hidden stems
+            6. ✅ 2025 Annual Pillar overlay
+            7. ✅ 2025 Mobility directions
+            8. ✅ Annual BaZi star for 2025
+            9. ✅ 2025 Life Palace (see Destiny page)
+            10. ✅ Six Aspects analysis
+            11. ✅ 2025 Monthly influence
+            12. ✅ Five Structures with explanations
+            13. ✅ Ten Profiles with explanations
             """)
 
 
