@@ -1,126 +1,92 @@
-# Ming QiMenDunJia v8.0 - Core Module
-# core/__init__.py
 """
-Core calculation engines for Ming QiMenDunJia.
+===============================================================================
+Ming QiMenDunJia - Core Calculation Module
+===============================================================================
 
-Modules:
-- qmdj_engine: Complete QMDJ calculations with all indicators
-- bazi_calculator: BaZi Four Pillars calculation
-- formations: Formation database and detection (NEW in v8.0)
-- destiny_engine: QMDJ Destiny Analysis (coming soon)
+This module contains the core calculation engines for:
+- BaZi (Four Pillars of Destiny)
+- QMDJ (Qi Men Dun Jia) - Coming soon
+- Formations - Coming soon
 
-v8.0 Changes:
-- Added formations module with 50+ formations
-- Added formation detection and scoring
-- Added export functions for Universal Schema v2.0
+Usage:
+    from core.bazi_calculator import analyze_bazi, calculate_four_pillars
 """
 
-__version__ = "10.1"
-
-# Try to import from qmdj_engine (may not exist if user is just using formations)
-try:
-    from .qmdj_engine import (
-        # Main function
-        generate_qmdj_chart,
-        
-        # Pillar calculations
-        calculate_qmdj_pillars,
-        calculate_year_pillar,
-        calculate_month_pillar,
-        calculate_day_pillar,
-        calculate_hour_pillar,
-        
-        # Indicator calculations
-        calculate_death_emptiness,
-        calculate_horse_star,
-        calculate_nobleman,
-        calculate_lead_indicators,
-        calculate_structure_and_ju,
-        calculate_component_strength,
-        
-        # Utility functions
-        get_chinese_hour_info,
-        
-        # Constants
-        PALACE_INFO,
-        LUOSHU_GRID,
-        HEAVENLY_STEMS,
-        EARTHLY_BRANCHES,
-        NINE_STARS,
-        EIGHT_DOORS,
-        EIGHT_DEITIES,
-        STEM_ELEMENTS,
-        STEM_POLARITY,
-        BRANCH_ELEMENTS,
-        SGT,
-    )
-    QMDJ_ENGINE_AVAILABLE = True
-except ImportError:
-    QMDJ_ENGINE_AVAILABLE = False
-
-# Import formations module (always available)
-from .formations import (
-    # Main classes
-    Formation,
-    FormationCategory,
+from .bazi_calculator import (
+    # Main analysis function
+    analyze_bazi,
     
-    # Detection functions
-    detect_formations,
-    get_formation_score,
+    # Four Pillars calculation
+    calculate_four_pillars,
+    calc_year_pillar,
+    calc_month_pillar,
+    calc_day_pillar,
+    calc_hour_pillar,
     
-    # Display functions
-    format_formation_display,
-    get_formation_card,
+    # Day Master analysis
+    calculate_dm_strength,
+    determine_useful_gods,
     
-    # Export functions
-    export_formations_for_schema,
+    # Ten Gods / Profiles
+    get_ten_god,
+    calculate_ten_profiles,
+    get_dominant_profile,
     
-    # Database queries
-    get_formation_by_name,
-    get_formations_by_category,
-    get_all_formations,
-    get_database_stats,
+    # Luck Pillars
+    calculate_luck_pillars,
+    calculate_luck_pillar_start_age,
+    get_luck_direction,
+    
+    # Interactions
+    detect_clashes,
+    detect_combines,
+    detect_three_harmony,
+    
+    # Solar terms
+    get_bazi_year,
+    get_bazi_month,
+    
+    # Utilities
+    pillars_to_dict,
+    validate_calculation,
+    
+    # Data classes
+    Pillar,
+    LuckPillar,
+    DMStrength,
     
     # Constants
-    FORMATIONS_DATABASE,
-    DOOR_ELEMENTS,
-    ELEMENT_CONTROLS,
+    HEAVENLY_STEMS,
+    HEAVENLY_STEMS_CN,
+    EARTHLY_BRANCHES,
+    EARTHLY_BRANCHES_CN,
+    BRANCH_ANIMALS,
+    STEM_ELEMENTS,
+    STEM_POLARITY,
+    BRANCH_ELEMENTS,
+    HIDDEN_STEMS,
+    SOLAR_TERMS,
+    ELEMENT_COLORS,
+    TEN_GODS_CN,
+    PROFILE_NAMES,
+    PRODUCTIVE_CYCLE,
+    PRODUCED_BY,
+    CONTROLLING_CYCLE,
+    CONTROLLED_BY,
+    SIX_CLASHES,
+    SIX_COMBINES,
+    THREE_HARMONY,
+    SEASONAL_STRENGTH,
 )
 
+__version__ = "1.0.0"
 __all__ = [
-    # Version
-    "__version__",
-    "QMDJ_ENGINE_AVAILABLE",
-    
-    # Formations (v8.0)
-    "Formation",
-    "FormationCategory",
-    "detect_formations",
-    "get_formation_score",
-    "format_formation_display",
-    "get_formation_card",
-    "export_formations_for_schema",
-    "get_formation_by_name",
-    "get_formations_by_category",
-    "get_all_formations",
-    "get_database_stats",
-    "FORMATIONS_DATABASE",
-    "DOOR_ELEMENTS",
-    "ELEMENT_CONTROLS",
+    'analyze_bazi',
+    'calculate_four_pillars',
+    'calculate_dm_strength',
+    'calculate_ten_profiles',
+    'calculate_luck_pillars',
+    'Pillar',
+    'LuckPillar',
+    'DMStrength',
 ]
-
-# Add QMDJ engine exports if available
-if QMDJ_ENGINE_AVAILABLE:
-    __all__.extend([
-        "generate_qmdj_chart",
-        "calculate_qmdj_pillars",
-        "calculate_death_emptiness",
-        "calculate_horse_star",
-        "calculate_nobleman",
-        "calculate_lead_indicators",
-        "PALACE_INFO",
-        "LUOSHU_GRID",
-        "NINE_STARS",
-        "EIGHT_DOORS",
-        "EIGHT_DEITIES",
-    ])
