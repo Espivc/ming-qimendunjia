@@ -446,8 +446,281 @@ SEASONAL_STRENGTH = {
 }
 
 # =============================================================================
-# ELEMENT COLORS (for UI)
+# ANNUAL PILLAR & ANALYSIS
 # =============================================================================
+
+def calculate_annual_pillar(year: int) -> Dict:
+    """
+    Calculate the Annual Pillar for a given year.
+    
+    2026 = 丙午 Bing Wu (Fire Horse)
+    """
+    # Year stem cycle: starts from Jia (index 0) at year 4 (e.g., 1984, 1994, 2004)
+    stem_idx = (year - 4) % 10
+    stem = HEAVENLY_STEMS[stem_idx]
+    stem_cn = HEAVENLY_STEMS_CN[stem_idx]
+    
+    # Year branch cycle: starts from Zi (index 0) at year 4 (e.g., 1984, 1996, 2008)
+    branch_idx = (year - 4) % 12
+    branch = EARTHLY_BRANCHES[branch_idx]
+    branch_cn = EARTHLY_BRANCHES_CN[branch_idx]
+    animal = BRANCH_ANIMALS[branch_idx]
+    
+    element = STEM_ELEMENTS[stem]
+    polarity = STEM_POLARITY[stem]
+    hidden = HIDDEN_STEMS.get(branch, [])
+    
+    return {
+        'year': year,
+        'stem': stem,
+        'stem_cn': stem_cn,
+        'branch': branch,
+        'branch_cn': branch_cn,
+        'animal': animal,
+        'element': element,
+        'polarity': polarity,
+        'chinese': f"{stem_cn}{branch_cn}",
+        'hidden_stems': hidden
+    }
+
+
+def calculate_annual_ten_gods(day_master: str, annual_pillar: Dict) -> Dict[str, str]:
+    """
+    Calculate Ten Gods for the annual pillar relative to Day Master.
+    """
+    stem_god = get_ten_god(day_master, annual_pillar['stem'])
+    
+    hidden_gods = []
+    for hs in annual_pillar['hidden_stems']:
+        hidden_gods.append({
+            'stem': hs,
+            'god': get_ten_god(day_master, hs)
+        })
+    
+    return {
+        'stem_god': stem_god,
+        'hidden_gods': hidden_gods
+    }
+
+
+def calculate_annual_profile_influence(natal_profiles: Dict[str, int], annual_pillar: Dict, day_master: str) -> Dict[str, float]:
+    """
+    Calculate how the annual pillar influences Ten Profiles.
+    Combines natal profile with annual pillar influence.
+    
+    Joey Yap shows both Natal % and Annual % side by side.
+    """
+    # Get the annual stem's ten god
+    annual_stem_god = get_ten_god(day_master, annual_pillar['stem'])
+    
+    # Get hidden stems' ten gods
+    annual_hidden_gods = [get_ten_god(day_master, hs) for hs in annual_pillar['hidden_stems']]
+    
+    # Start with natal counts
+    annual_counts = natal_profiles.copy()
+    
+    # Add annual pillar influence
+    # Visible stem adds weight
+    if annual_stem_god in annual_counts:
+        annual_counts[annual_stem_god] = annual_counts.get(annual_stem_god, 0) + 2
+    
+    # Hidden stems add weight
+    for god in annual_hidden_gods:
+        if god in annual_counts:
+            annual_counts[god] = annual_counts.get(god, 0) + 1
+    
+    # Calculate percentages using Joey Yap position-weighted method
+    # (simplified version - adds annual pillar influence to natal)
+    ten_gods = [
+        'Direct Officer', 'Indirect Resource', 'Seven Killings', 'Direct Resource',
+        'Friend', 'Eating God', 'Rob Wealth', 'Direct Wealth', 'Indirect Wealth', 'Hurting Officer'
+    ]
+    
+    max_count = max(annual_counts.values()) if annual_counts.values() else 1
+    if max_count == 0:
+        max_count = 1
+    
+    percentages = {}
+    for god in ten_gods:
+        count = annual_counts.get(god, 0)
+        if count > 0:
+            pct = (count / max_count) * 100
+            percentages[god] = round(pct, 0)
+        else:
+            percentages[god] = 0
+    
+    return percentages
+
+
+# =============================================================================
+# SIX ASPECTS ANALYSIS (六神)
+# =============================================================================
+
+SIX_ASPECTS_INFO = {
+    'Life Purpose': {
+        'chinese': '事業',
+        'description': 'Career direction, life mission, sense of purpose',
+        'gods': ['Direct Officer', 'Seven Killings'],
+        'element': 'Fire'
+    },
+    'Financial': {
+        'chinese': '財運',
+        'description': 'Wealth potential, money management, financial opportunities',
+        'gods': ['Direct Wealth', 'Indirect Wealth'],
+        'element': 'Wood'
+    },
+    'Relationship': {
+        'chinese': '感情',
+        'description': 'Romance, partnerships, social connections',
+        'gods': ['Rob Wealth', 'Friend'],
+        'element': 'Metal'
+    },
+    'Family': {
+        'chinese': '家庭',
+        'description': 'Family harmony, home life, parental relationships',
+        'gods': ['Direct Resource', 'Indirect Resource'],
+        'element': 'Earth'
+    },
+    'Wellness': {
+        'chinese': '健康',
+        'description': 'Physical health, mental wellbeing, vitality',
+        'gods': ['Eating God'],
+        'element': 'Water'
+    },
+    'Contribution': {
+        'chinese': '貢獻',
+        'description': 'Creative output, legacy, impact on others',
+        'gods': ['Hurting Officer', 'Eating God'],
+        'element': 'Water'
+    }
+}
+
+
+def calculate_six_aspects(profile_percentages: Dict[str, float]) -> Dict[str, Dict]:
+    """
+    Calculate Six Aspects scores from Ten Profiles.
+    
+    Each aspect is derived from specific Ten Gods:
+    - Life Purpose: Direct Officer + Seven Killings (Influence/官)
+    - Financial: Direct Wealth + Indirect Wealth (Wealth/財)
+    - Relationship: Rob Wealth + Friend (Companion/比)
+    - Family: Direct Resource + Indirect Resource (Resource/印)
+    - Wellness: Eating God (Output/食)
+    - Contribution: Hurting Officer + Eating God (Output/食)
+    """
+    aspects = {}
+    
+    for aspect_name, info in SIX_ASPECTS_INFO.items():
+        gods = info['gods']
+        
+        # Calculate score as average of related gods' percentages
+        total = sum(profile_percentages.get(god, 0) for god in gods)
+        score = total / len(gods) if gods else 0
+        
+        aspects[aspect_name] = {
+            'score': round(score, 0),
+            'chinese': info['chinese'],
+            'description': info['description'],
+            'element': info['element'],
+            'related_gods': gods
+        }
+    
+    return aspects
+
+
+def calculate_annual_six_aspects(natal_aspects: Dict, annual_profile_pcts: Dict[str, float]) -> Dict[str, Dict]:
+    """
+    Calculate Six Aspects for annual comparison.
+    """
+    annual_aspects = {}
+    
+    for aspect_name, info in SIX_ASPECTS_INFO.items():
+        gods = info['gods']
+        
+        total = sum(annual_profile_pcts.get(god, 0) for god in gods)
+        score = total / len(gods) if gods else 0
+        
+        natal_score = natal_aspects.get(aspect_name, {}).get('score', 0)
+        change = score - natal_score
+        
+        annual_aspects[aspect_name] = {
+            'score': round(score, 0),
+            'natal_score': natal_score,
+            'change': round(change, 0),
+            'chinese': info['chinese'],
+            'element': info['element']
+        }
+    
+    return annual_aspects
+
+
+# =============================================================================
+# MONTHLY INFLUENCE
+# =============================================================================
+
+MONTHLY_STEMS_2026 = {
+    # 2026 is 丙午 year, so month stems follow the pattern
+    # Month stem = (Year stem index * 2 + month index) % 10
+    1: ('Geng', 'Yin'),    # Feb 4 - Tiger month
+    2: ('Xin', 'Mao'),     # Mar 5 - Rabbit month  
+    3: ('Ren', 'Chen'),    # Apr 5 - Dragon month
+    4: ('Gui', 'Si'),      # May 5 - Snake month
+    5: ('Jia', 'Wu'),      # Jun 5 - Horse month
+    6: ('Yi', 'Wei'),      # Jul 7 - Goat month
+    7: ('Bing', 'Shen'),   # Aug 7 - Monkey month
+    8: ('Ding', 'You'),    # Sep 7 - Rooster month
+    9: ('Wu', 'Xu'),       # Oct 8 - Dog month
+    10: ('Ji', 'Hai'),     # Nov 7 - Pig month
+    11: ('Geng', 'Zi'),    # Dec 7 - Rat month
+    12: ('Xin', 'Chou'),   # Jan 5 (2027) - Ox month
+}
+
+
+def calculate_monthly_influence(year: int, day_master: str) -> List[Dict]:
+    """
+    Calculate monthly pillar influence for a given year.
+    """
+    months = []
+    
+    # Get year stem for calculating month stems
+    year_stem_idx = (year - 4) % 10
+    
+    month_names = ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 
+                   'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan+']
+    
+    for month_num in range(1, 13):
+        # Calculate month stem (Five Tiger formula)
+        # Base: Jia/Ji year starts with Bing Yin
+        base_stem_idx = (year_stem_idx % 5) * 2
+        month_stem_idx = (base_stem_idx + month_num - 1) % 10
+        month_stem = HEAVENLY_STEMS[month_stem_idx]
+        
+        # Month branch is fixed: Yin(Feb), Mao(Mar), etc.
+        month_branch_idx = (month_num + 1) % 12  # Yin=2 for Feb
+        month_branch = EARTHLY_BRANCHES[month_branch_idx]
+        
+        # Get hidden stems
+        hidden = HIDDEN_STEMS.get(month_branch, [])
+        
+        # Calculate ten gods
+        stem_god = get_ten_god(day_master, month_stem)
+        hidden_gods = [{'stem': hs, 'god': get_ten_god(day_master, hs)} for hs in hidden]
+        
+        months.append({
+            'month': month_num,
+            'name': month_names[month_num - 1],
+            'stem': month_stem,
+            'stem_cn': HEAVENLY_STEMS_CN[HEAVENLY_STEMS.index(month_stem)],
+            'branch': month_branch,
+            'branch_cn': EARTHLY_BRANCHES_CN[EARTHLY_BRANCHES.index(month_branch)],
+            'animal': BRANCH_ANIMALS[EARTHLY_BRANCHES.index(month_branch)],
+            'element': STEM_ELEMENTS[month_stem],
+            'stem_god': stem_god,
+            'hidden_stems': hidden,
+            'hidden_gods': hidden_gods
+        })
+    
+    return months
 
 ELEMENT_COLORS = {
     'Wood': '#228B22',   # Forest Green
@@ -680,6 +953,215 @@ EIGHT_MANSIONS = {
         'Huo Hai': 'Northeast', 'Wu Gui': 'West', 'Liu Sha': 'Southwest', 'Jue Ming': 'Northwest'
     }
 }
+
+# =============================================================================
+# HIDDEN STEMS MEANINGS (藏干解释)
+# =============================================================================
+
+HIDDEN_STEM_ROLES = {
+    0: {'name': 'Main Qi', 'chinese': '主气', 'description': 'The dominant energy of the branch. This is the primary influence and carries the most weight.'},
+    1: {'name': 'Middle Qi', 'chinese': '中气', 'description': 'The secondary energy. This represents transitional or supporting influence.'},
+    2: {'name': 'Residual Qi', 'chinese': '余气', 'description': 'The residual or leftover energy from the previous season. Subtle but present influence.'}
+}
+
+def explain_hidden_stems(day_master: str, branch: str, hidden_stems: List[str]) -> List[Dict]:
+    """
+    Generate detailed explanations for hidden stems in a branch.
+    
+    For each hidden stem, explains:
+    - What element it is
+    - Its role (Main Qi, Middle Qi, Residual Qi)
+    - What Ten God it represents relative to Day Master
+    - What this means practically
+    """
+    explanations = []
+    
+    for i, stem in enumerate(hidden_stems):
+        stem_element = STEM_ELEMENTS[stem]
+        stem_polarity = STEM_POLARITY[stem]
+        stem_cn = HEAVENLY_STEMS_CN[HEAVENLY_STEMS.index(stem)]
+        
+        # Get Ten God relationship
+        ten_god = get_ten_god(day_master, stem)
+        ten_god_cn = TEN_GODS_CN.get(ten_god, '')
+        
+        # Get role based on position
+        role = HIDDEN_STEM_ROLES.get(i, HIDDEN_STEM_ROLES[2])
+        
+        # Generate practical meaning based on Ten God
+        meaning = get_ten_god_meaning(ten_god)
+        
+        explanations.append({
+            'stem': stem,
+            'stem_cn': stem_cn,
+            'element': stem_element,
+            'polarity': stem_polarity,
+            'role': role['name'],
+            'role_cn': role['chinese'],
+            'role_description': role['description'],
+            'ten_god': ten_god,
+            'ten_god_cn': ten_god_cn,
+            'meaning': meaning,
+            'position': i
+        })
+    
+    return explanations
+
+
+def get_ten_god_meaning(ten_god: str) -> Dict:
+    """
+    Get practical meaning and interpretation for each Ten God.
+    """
+    meanings = {
+        'Friend': {
+            'keyword': 'Self, Peers, Competition',
+            'represents': 'Same element, same polarity as Day Master',
+            'people': 'Friends, siblings, colleagues at same level',
+            'traits': 'Independence, self-reliance, competition',
+            'positive': 'Strong sense of self, confident, independent',
+            'negative': 'Stubborn, competitive, reluctant to ask for help',
+            'life_aspect': 'Personal identity and peer relationships'
+        },
+        'Rob Wealth': {
+            'keyword': 'Rivalry, Boldness, Action',
+            'represents': 'Same element, opposite polarity as Day Master',
+            'people': 'Competitors, rivals, assertive friends',
+            'traits': 'Bold action, risk-taking, competitive spirit',
+            'positive': 'Courageous, decisive, willing to take risks',
+            'negative': 'Impulsive, aggressive, may lose money through competition',
+            'life_aspect': 'Competition and bold ventures'
+        },
+        'Eating God': {
+            'keyword': 'Creativity, Expression, Enjoyment',
+            'represents': 'Element produced by Day Master, same polarity',
+            'people': 'Children (especially daughters for men), students',
+            'traits': 'Creativity, self-expression, appreciation of life',
+            'positive': 'Artistic, enjoys life, good with food/arts',
+            'negative': 'May be too relaxed, indulgent, lacks drive',
+            'life_aspect': 'Creative output and life enjoyment'
+        },
+        'Hurting Officer': {
+            'keyword': 'Rebellion, Innovation, Expression',
+            'represents': 'Element produced by Day Master, opposite polarity',
+            'people': 'Children (especially sons for men), unconventional people',
+            'traits': 'Innovation, challenging authority, strong expression',
+            'positive': 'Creative genius, innovative, breaks new ground',
+            'negative': 'Rebellious, conflicts with authority, sharp tongue',
+            'life_aspect': 'Innovation and challenging the status quo'
+        },
+        'Direct Wealth': {
+            'keyword': 'Stable Income, Spouse, Control',
+            'represents': 'Element controlled by Day Master, opposite polarity',
+            'people': 'Wife (for men), stable business partners',
+            'traits': 'Financial stability, management, tangible assets',
+            'positive': 'Good money manager, stable income, practical',
+            'negative': 'May be too focused on money, materialistic',
+            'life_aspect': 'Stable finances and marriage'
+        },
+        'Indirect Wealth': {
+            'keyword': 'Windfall, Opportunities, Father',
+            'represents': 'Element controlled by Day Master, same polarity',
+            'people': 'Father, mistress, speculative partners',
+            'traits': 'Unexpected income, opportunities, risk for reward',
+            'positive': 'Good at seizing opportunities, lucky with money',
+            'negative': 'Unstable finances, gambling tendencies',
+            'life_aspect': 'Opportunities and unexpected gains'
+        },
+        'Direct Officer': {
+            'keyword': 'Authority, Discipline, Husband',
+            'represents': 'Element that controls Day Master, opposite polarity',
+            'people': 'Husband (for women), bosses, government officials',
+            'traits': 'Discipline, following rules, proper conduct',
+            'positive': 'Respected, disciplined, good reputation',
+            'negative': 'Too rigid, pressured by authority, conservative',
+            'life_aspect': 'Career authority and proper conduct'
+        },
+        'Seven Killings': {
+            'keyword': 'Power, Pressure, Ambition',
+            'represents': 'Element that controls Day Master, same polarity',
+            'people': 'Competitors in authority, demanding bosses',
+            'traits': 'Ambition, drive, pressure to succeed',
+            'positive': 'Powerful, ambitious, can handle pressure',
+            'negative': 'Aggressive, ruthless, health issues from stress',
+            'life_aspect': 'Power struggles and ambition'
+        },
+        'Direct Resource': {
+            'keyword': 'Mother, Education, Support',
+            'represents': 'Element that produces Day Master, opposite polarity',
+            'people': 'Mother, teachers, mentors, helpful elders',
+            'traits': 'Learning, nurturing support, traditional knowledge',
+            'positive': 'Well-educated, supported, good memory',
+            'negative': 'Dependent, too passive, over-protected',
+            'life_aspect': 'Education and nurturing support'
+        },
+        'Indirect Resource': {
+            'keyword': 'Unconventional Learning, Intuition',
+            'represents': 'Element that produces Day Master, same polarity',
+            'people': 'Step-mother, alternative teachers, spiritual guides',
+            'traits': 'Intuition, unconventional wisdom, spiritual learning',
+            'positive': 'Intuitive, creative thinking, spiritual insight',
+            'negative': 'Scattered thinking, impractical ideas, loneliness',
+            'life_aspect': 'Unconventional wisdom and intuition'
+        }
+    }
+    
+    return meanings.get(ten_god, {
+        'keyword': 'Unknown',
+        'represents': 'Unknown relationship',
+        'people': 'Unknown',
+        'traits': 'Unknown',
+        'positive': 'Unknown',
+        'negative': 'Unknown',
+        'life_aspect': 'Unknown'
+    })
+
+
+def get_pillar_hidden_stem_analysis(pillars: Dict, day_master: str) -> Dict[str, List[Dict]]:
+    """
+    Get complete hidden stem analysis for all four pillars.
+    """
+    analysis = {}
+    
+    pillar_meanings = {
+        'year': {
+            'name': 'Year Pillar',
+            'chinese': '年柱',
+            'represents': 'Ancestors, grandparents, early childhood (0-16)',
+            'influence': 'Social environment, family background, inherited traits'
+        },
+        'month': {
+            'name': 'Month Pillar',
+            'chinese': '月柱',
+            'represents': 'Parents, young adulthood (17-32)',
+            'influence': 'Career foundation, parental influence, education period'
+        },
+        'day': {
+            'name': 'Day Pillar',
+            'chinese': '日柱',
+            'represents': 'Self and spouse, middle age (33-48)',
+            'influence': 'Marriage, personal identity, core self'
+        },
+        'hour': {
+            'name': 'Hour Pillar',
+            'chinese': '时柱',
+            'represents': 'Children, later life (49+)',
+            'influence': 'Children, legacy, later achievements, subconscious'
+        }
+    }
+    
+    for name, pillar in pillars.items():
+        hidden_explanations = explain_hidden_stems(day_master, pillar.branch, pillar.hidden_stems)
+        
+        analysis[name] = {
+            'pillar_info': pillar_meanings[name],
+            'branch': pillar.branch,
+            'branch_cn': EARTHLY_BRANCHES_CN[EARTHLY_BRANCHES.index(pillar.branch)],
+            'animal': BRANCH_ANIMALS[EARTHLY_BRANCHES.index(pillar.branch)],
+            'hidden_stems': hidden_explanations
+        }
+    
+    return analysis
+
 
 # =============================================================================
 # FIVE STRUCTURES (五型格)
@@ -1879,7 +2361,9 @@ def analyze_bazi(
         # NEW: Eight Mansions
         'eight_mansions': calculate_eight_mansions(calculate_gua_number(birth_date.year, gender)),
         # NEW: Five Structures
-        'five_structures': calculate_five_structures(profiles)
+        'five_structures': calculate_five_structures(profiles),
+        # NEW: Hidden Stems Analysis with explanations
+        'hidden_stems_analysis': get_pillar_hidden_stem_analysis(pillars, day_master)
     }
 
 # =============================================================================
