@@ -1164,6 +1164,328 @@ def get_pillar_hidden_stem_analysis(pillars: Dict, day_master: str) -> Dict[str,
 
 
 # =============================================================================
+# 12 LIFE STAGES DISPLAY (十二长生)
+# =============================================================================
+
+TWELVE_STAGES_INFO = {
+    '長生': {'pinyin': 'Chang Sheng', 'english': 'Growth', 'meaning': 'Birth of energy, new beginnings, fresh start', 'quality': 'Favorable'},
+    '沐浴': {'pinyin': 'Mu Yu', 'english': 'Bath', 'meaning': 'Cleansing, vulnerability, exposed, romantic', 'quality': 'Unfavorable'},
+    '冠帶': {'pinyin': 'Guan Dai', 'english': 'Youth', 'meaning': 'Coming of age, maturity approaching, preparation', 'quality': 'Favorable'},
+    '臨官': {'pinyin': 'Lin Guan', 'english': 'Maturity', 'meaning': 'Career advancement, official position, authority', 'quality': 'Favorable'},
+    '帝旺': {'pinyin': 'Di Wang', 'english': 'Prosperous', 'meaning': 'Peak power, maximum strength, emperor stage', 'quality': 'Favorable'},
+    '衰': {'pinyin': 'Shuai', 'english': 'Weakening', 'meaning': 'Decline begins, energy reducing, caution needed', 'quality': 'Unfavorable'},
+    '病': {'pinyin': 'Bing', 'english': 'Sickness', 'meaning': 'Illness, weakness, need for rest and recovery', 'quality': 'Unfavorable'},
+    '死': {'pinyin': 'Si', 'english': 'Death', 'meaning': 'End of cycle, transformation, letting go', 'quality': 'Unfavorable'},
+    '墓': {'pinyin': 'Mu', 'english': 'Grave', 'meaning': 'Storage, hidden resources, accumulation', 'quality': 'Neutral'},
+    '絕': {'pinyin': 'Jue', 'english': 'Extinction', 'meaning': 'Complete end, void, spiritual transformation', 'quality': 'Unfavorable'},
+    '胎': {'pinyin': 'Tai', 'english': 'Conceived', 'meaning': 'Conception, potential forming, planning stage', 'quality': 'Neutral'},
+    '養': {'pinyin': 'Yang', 'english': 'Nourishing', 'meaning': 'Nurturing, preparation for birth, incubation', 'quality': 'Favorable'}
+}
+
+def get_twelve_stages_wheel(day_master: str) -> List[Dict]:
+    """
+    Get the 12 Life Stages wheel starting from Day Master's Growth position.
+    Returns stages mapped to all 12 branches in order.
+    """
+    # Starting branch for Growth (長生) for each Day Master
+    dm_element = STEM_ELEMENTS[day_master]
+    dm_polarity = STEM_POLARITY[day_master]
+    
+    start_branch = LIFE_STAGE_START.get(day_master, 'Yin')
+    start_idx = EARTHLY_BRANCHES.index(start_branch)
+    
+    # Direction: Yang goes forward, Yin goes backward
+    direction = 1 if dm_polarity == 'Yang' else -1
+    
+    wheel = []
+    
+    for i, stage_tuple in enumerate(TWELVE_STAGES):
+        stage_cn, stage_pinyin, stage_english = stage_tuple
+        
+        branch_idx = (start_idx + (i * direction)) % 12
+        branch = EARTHLY_BRANCHES[branch_idx]
+        branch_cn = EARTHLY_BRANCHES_CN[branch_idx]
+        animal = BRANCH_ANIMALS[branch_idx]
+        
+        stage_info = TWELVE_STAGES_INFO.get(stage_cn, {})
+        
+        wheel.append({
+            'stage_cn': stage_cn,
+            'stage_pinyin': stage_pinyin,
+            'stage_english': stage_english,
+            'meaning': stage_info.get('meaning', ''),
+            'quality': stage_info.get('quality', 'Neutral'),
+            'branch': branch,
+            'branch_cn': branch_cn,
+            'animal': animal,
+            'position': i + 1
+        })
+    
+    return wheel
+
+
+# =============================================================================
+# 6 ASPECTS CHART (六项分析)
+# =============================================================================
+
+SIX_ASPECTS_INFO = {
+    'life_purpose': {
+        'name': 'Life Purpose',
+        'chinese': '事業',
+        'description': 'Your mission, calling, and what drives you',
+        'ten_gods': ['Direct Officer', 'Seven Killings'],
+        'element': 'Fire'
+    },
+    'wealth': {
+        'name': 'Wealth & Finance',
+        'chinese': '財運',
+        'description': 'Money, assets, and financial opportunities',
+        'ten_gods': ['Direct Wealth', 'Indirect Wealth'],
+        'element': 'Wood'
+    },
+    'relationship': {
+        'name': 'Relationships',
+        'chinese': '感情',
+        'description': 'Marriage, romance, and partnerships',
+        'ten_gods': ['Direct Wealth', 'Direct Officer'],  # DW for men, DO for women
+        'element': 'Water'
+    },
+    'health': {
+        'name': 'Health & Wellness',
+        'chinese': '健康',
+        'description': 'Physical vitality and mental wellbeing',
+        'ten_gods': ['Friend', 'Rob Wealth'],
+        'element': 'Metal'
+    },
+    'career': {
+        'name': 'Career & Status',
+        'chinese': '官位',
+        'description': 'Professional advancement and social status',
+        'ten_gods': ['Direct Officer', 'Seven Killings'],
+        'element': 'Fire'
+    },
+    'creativity': {
+        'name': 'Creativity & Output',
+        'chinese': '創作',
+        'description': 'Self-expression, children, and creative works',
+        'ten_gods': ['Eating God', 'Hurting Officer'],
+        'element': 'Water'
+    }
+}
+
+def calculate_six_aspects(profile_counts: Dict[str, int], gender: str = 'male') -> Dict[str, Dict]:
+    """
+    Calculate the 6 Aspects scores based on Ten Gods distribution.
+    """
+    aspects = {}
+    
+    for aspect_key, info in SIX_ASPECTS_INFO.items():
+        # Calculate score based on relevant ten gods
+        score = sum(profile_counts.get(god, 0) for god in info['ten_gods'])
+        
+        # Normalize to percentage (assuming max possible is ~6)
+        max_possible = 6
+        percentage = min(100, (score / max_possible) * 100)
+        
+        aspects[aspect_key] = {
+            'name': info['name'],
+            'chinese': info['chinese'],
+            'description': info['description'],
+            'score': score,
+            'percentage': round(percentage, 0),
+            'element': info['element'],
+            'strength': 'Strong' if percentage >= 60 else 'Moderate' if percentage >= 30 else 'Weak'
+        }
+    
+    return aspects
+
+
+# =============================================================================
+# ANNUAL ANALYSIS (年度分析)
+# =============================================================================
+
+def calculate_annual_pillar(year: int) -> Dict:
+    """
+    Calculate the Annual Pillar for a given year.
+    """
+    # Stem cycle: starts with Jia (0) at year 4 (e.g., 1984, 1994, 2004)
+    stem_idx = (year - 4) % 10
+    stem = HEAVENLY_STEMS[stem_idx]
+    stem_cn = HEAVENLY_STEMS_CN[stem_idx]
+    
+    # Branch cycle: starts with Zi (0) at year 4 (e.g., 1984 = Rat)
+    branch_idx = (year - 4) % 12
+    branch = EARTHLY_BRANCHES[branch_idx]
+    branch_cn = EARTHLY_BRANCHES_CN[branch_idx]
+    animal = BRANCH_ANIMALS[branch_idx]
+    
+    hidden = HIDDEN_STEMS.get(branch, [])
+    
+    return {
+        'year': year,
+        'stem': stem,
+        'stem_cn': stem_cn,
+        'branch': branch,
+        'branch_cn': branch_cn,
+        'animal': animal,
+        'element': STEM_ELEMENTS[stem],
+        'polarity': STEM_POLARITY[stem],
+        'hidden_stems': hidden,
+        'chinese': f"{stem_cn}{branch_cn}"
+    }
+
+
+def calculate_annual_analysis(day_master: str, natal_profiles: Dict[str, int], year: int = 2026) -> Dict:
+    """
+    Calculate annual influence comparing natal chart to annual pillar.
+    """
+    annual_pillar = calculate_annual_pillar(year)
+    
+    # Calculate Ten Gods for annual stem and hidden stems
+    annual_stem_god = get_ten_god(day_master, annual_pillar['stem'])
+    annual_hidden_gods = [get_ten_god(day_master, hs) for hs in annual_pillar['hidden_stems']]
+    
+    # Calculate annual profile influence
+    annual_profiles = {}
+    for god in TEN_GODS_CN.keys():
+        annual_profiles[god] = 0
+    
+    # Add annual stem (weight 2)
+    annual_profiles[annual_stem_god] = annual_profiles.get(annual_stem_god, 0) + 2
+    
+    # Add hidden stems (weight 1 each)
+    for god in annual_hidden_gods:
+        annual_profiles[god] = annual_profiles.get(god, 0) + 1
+    
+    # Combine natal and annual for comparison
+    combined_profiles = {}
+    for god in TEN_GODS_CN.keys():
+        natal_score = natal_profiles.get(god, 0)
+        annual_score = annual_profiles.get(god, 0)
+        combined_profiles[god] = {
+            'natal': natal_score,
+            'annual': annual_score,
+            'combined': natal_score + annual_score
+        }
+    
+    # Determine annual theme based on strongest annual gods
+    annual_theme = max(annual_profiles.items(), key=lambda x: x[1])[0] if annual_profiles else 'Friend'
+    
+    return {
+        'year': year,
+        'pillar': annual_pillar,
+        'stem_god': annual_stem_god,
+        'hidden_gods': annual_hidden_gods,
+        'profiles': combined_profiles,
+        'theme': annual_theme,
+        'theme_name': PROFILE_NAMES.get(annual_theme, annual_theme)
+    }
+
+
+# =============================================================================
+# MONTHLY INFLUENCE (月度分析)
+# =============================================================================
+
+# Month stems follow 5-Tiger rule based on Year Stem
+MONTH_STEM_START = {
+    'Jia': 'Bing', 'Ji': 'Bing',    # 甲/己年 → 丙寅月始
+    'Yi': 'Wu', 'Geng': 'Wu',       # 乙/庚年 → 戊寅月始
+    'Bing': 'Geng', 'Xin': 'Geng',  # 丙/辛年 → 庚寅月始
+    'Ding': 'Ren', 'Ren': 'Ren',    # 丁/壬年 → 壬寅月始
+    'Wu': 'Jia', 'Gui': 'Jia'       # 戊/癸年 → 甲寅月始
+}
+
+MONTH_BRANCHES = ['Yin', 'Mao', 'Chen', 'Si', 'Wu', 'Wei', 'Shen', 'You', 'Xu', 'Hai', 'Zi', 'Chou']
+
+def calculate_monthly_influence(day_master: str, year: int = 2026) -> List[Dict]:
+    """
+    Calculate monthly pillars and their influence for a given year.
+    """
+    # Get year stem to determine month stem cycle
+    annual_pillar = calculate_annual_pillar(year)
+    year_stem = annual_pillar['stem']
+    
+    # Get starting month stem
+    start_stem = MONTH_STEM_START.get(year_stem, 'Jia')
+    start_stem_idx = HEAVENLY_STEMS.index(start_stem)
+    
+    months = []
+    month_names = ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan']
+    
+    for i in range(12):
+        stem_idx = (start_stem_idx + i) % 10
+        stem = HEAVENLY_STEMS[stem_idx]
+        stem_cn = HEAVENLY_STEMS_CN[stem_idx]
+        
+        branch = MONTH_BRANCHES[i]
+        branch_idx = EARTHLY_BRANCHES.index(branch)
+        branch_cn = EARTHLY_BRANCHES_CN[branch_idx]
+        animal = BRANCH_ANIMALS[branch_idx]
+        
+        hidden = HIDDEN_STEMS.get(branch, [])
+        
+        # Calculate Ten Gods
+        stem_god = get_ten_god(day_master, stem)
+        hidden_gods = [(hs, get_ten_god(day_master, hs)) for hs in hidden]
+        
+        # Get life stage for this month
+        stage = get_life_stage(day_master, branch)
+        
+        months.append({
+            'month_num': i + 1,
+            'month_name': month_names[i],
+            'year': year if i < 11 else year + 1,  # Jan is next year
+            'stem': stem,
+            'stem_cn': stem_cn,
+            'branch': branch,
+            'branch_cn': branch_cn,
+            'animal': animal,
+            'element': STEM_ELEMENTS[stem],
+            'chinese': f"{stem_cn}{branch_cn}",
+            'stem_god': stem_god,
+            'stem_god_cn': TEN_GODS_CN.get(stem_god, ''),
+            'hidden_stems': hidden_gods,
+            'life_stage': {
+                'chinese': stage[0],
+                'pinyin': stage[1],
+                'english': stage[2]
+            }
+        })
+    
+    return months
+
+
+# =============================================================================
+# CURRENT LUCK PILLAR DETECTION
+# =============================================================================
+
+def get_current_luck_pillar(luck_pillars: List[Dict], birth_year: int, current_year: int = 2026) -> Dict:
+    """
+    Determine which luck pillar is currently active based on age.
+    """
+    age = current_year - birth_year
+    
+    current_pillar = None
+    pillar_index = -1
+    
+    for i, lp in enumerate(luck_pillars):
+        start_age = lp.get('start_age', 0)
+        end_age = start_age + 9
+        
+        if start_age <= age <= end_age:
+            current_pillar = lp
+            pillar_index = i
+            break
+    
+    return {
+        'current_age': age,
+        'pillar': current_pillar,
+        'pillar_index': pillar_index,
+        'years_remaining': (current_pillar.get('start_age', 0) + 10 - age) if current_pillar else 0
+    }
+
+
+# =============================================================================
 # FIVE STRUCTURES (五型格)
 # =============================================================================
 
@@ -1970,6 +2292,245 @@ def calculate_five_structures(profile_counts: Dict[str, int]) -> Dict[str, Dict]
         'dominant_element': dominant[1]['element']
     }
 
+
+# =============================================================================
+# ANNUAL PILLAR CALCULATION
+# =============================================================================
+
+def calculate_annual_pillar(year: int) -> Dict:
+    """
+    Calculate the Annual Pillar for any given year.
+    
+    The cycle repeats every 60 years (Sexagenary cycle).
+    Reference: 1984 = 甲子 Jia Zi (Wood Rat)
+    
+    2026 = 丙午 Bing Wu (Fire Horse)
+    """
+    # Reference year: 1984 = index 0 (Jia Zi)
+    cycle_index = (year - 1984) % 60
+    
+    stem_index = cycle_index % 10
+    branch_index = cycle_index % 12
+    
+    stem = HEAVENLY_STEMS[stem_index]
+    stem_cn = HEAVENLY_STEMS_CN[stem_index]
+    branch = EARTHLY_BRANCHES[branch_index]
+    branch_cn = EARTHLY_BRANCHES_CN[branch_index]
+    
+    element = STEM_ELEMENTS[stem]
+    polarity = STEM_POLARITY[stem]
+    animal = BRANCH_ANIMALS[branch_index]
+    hidden = HIDDEN_STEMS.get(branch, [])
+    
+    return {
+        'year': year,
+        'stem': stem,
+        'stem_cn': stem_cn,
+        'branch': branch,
+        'branch_cn': branch_cn,
+        'chinese': f"{stem_cn}{branch_cn}",
+        'element': element,
+        'polarity': polarity,
+        'animal': animal,
+        'hidden_stems': hidden,
+        'description': f"{polarity} {element} {animal}"
+    }
+
+
+def analyze_annual_influence(natal_result: Dict, year: int) -> Dict:
+    """
+    Analyze how an annual pillar influences the natal chart.
+    
+    Returns comparison of:
+    - Annual pillar details
+    - Ten God relationship to Day Master
+    - Impact on natal chart (clashes, combines)
+    - Profile shift analysis
+    """
+    annual = calculate_annual_pillar(year)
+    
+    # Get Day Master from natal
+    dm_stem = natal_result['day_master']['stem']
+    dm_element = natal_result['day_master']['element']
+    
+    # Calculate Ten God for annual stem relative to Day Master
+    annual_stem_god = get_ten_god(dm_stem, annual['stem'])
+    
+    # Calculate Ten Gods for annual hidden stems
+    annual_hidden_gods = []
+    for hs in annual['hidden_stems']:
+        god = get_ten_god(dm_stem, hs)
+        annual_hidden_gods.append({
+            'stem': hs,
+            'god': god,
+            'chinese': TEN_GODS_CN.get(god, '')
+        })
+    
+    # Check for clashes with natal branches
+    natal_branches = [
+        natal_result['four_pillars']['year']['branch'],
+        natal_result['four_pillars']['month']['branch'],
+        natal_result['four_pillars']['day']['branch'],
+        natal_result['four_pillars']['hour']['branch']
+    ]
+    
+    clashes = []
+    for i, nb in enumerate(natal_branches):
+        pillar_names = ['Year', 'Month', 'Day', 'Hour']
+        if SIX_CLASHES.get(annual['branch']) == nb or SIX_CLASHES.get(nb) == annual['branch']:
+            clashes.append({
+                'natal_pillar': pillar_names[i],
+                'natal_branch': nb,
+                'annual_branch': annual['branch'],
+                'description': f"{annual['animal']} clashes with {BRANCH_ANIMALS[EARTHLY_BRANCHES.index(nb)]}"
+            })
+    
+    # Check for combines
+    combines = []
+    for i, nb in enumerate(natal_branches):
+        pillar_names = ['Year', 'Month', 'Day', 'Hour']
+        combine_result = SIX_COMBINES.get(annual['branch'])
+        if combine_result and combine_result[0] == nb:
+            combines.append({
+                'natal_pillar': pillar_names[i],
+                'natal_branch': nb,
+                'annual_branch': annual['branch'],
+                'result_element': combine_result[1],
+                'description': f"{annual['animal']} combines with {BRANCH_ANIMALS[EARTHLY_BRANCHES.index(nb)]} → {combine_result[1]}"
+            })
+    
+    # Determine if annual element is favorable or unfavorable
+    useful_elements = natal_result['useful_gods']['useful']
+    unfavorable_elements = natal_result['useful_gods']['unfavorable']
+    
+    annual_element = annual['element']
+    is_favorable = annual_element in useful_elements
+    is_unfavorable = annual_element in unfavorable_elements
+    
+    # Calculate annual profile influence (how annual changes the Ten Gods distribution)
+    # This simulates adding the annual pillar to the natal chart
+    annual_profiles = {}
+    annual_profiles[annual_stem_god] = annual_profiles.get(annual_stem_god, 0) + 1
+    for hg in annual_hidden_gods:
+        annual_profiles[hg['god']] = annual_profiles.get(hg['god'], 0) + 1
+    
+    # Generate interpretation
+    interpretation = generate_annual_interpretation(
+        natal_result, annual, annual_stem_god, 
+        is_favorable, is_unfavorable, clashes, combines
+    )
+    
+    return {
+        'annual_pillar': annual,
+        'annual_stem_god': {
+            'god': annual_stem_god,
+            'chinese': TEN_GODS_CN.get(annual_stem_god, ''),
+            'profile_name': PROFILE_NAMES.get(annual_stem_god, '')
+        },
+        'annual_hidden_gods': annual_hidden_gods,
+        'element_analysis': {
+            'annual_element': annual_element,
+            'is_favorable': is_favorable,
+            'is_unfavorable': is_unfavorable,
+            'useful_elements': useful_elements,
+            'unfavorable_elements': unfavorable_elements
+        },
+        'interactions': {
+            'clashes': clashes,
+            'combines': combines
+        },
+        'annual_profiles': annual_profiles,
+        'interpretation': interpretation
+    }
+
+
+def generate_annual_interpretation(natal: Dict, annual: Dict, annual_god: str,
+                                   is_favorable: bool, is_unfavorable: bool,
+                                   clashes: list, combines: list) -> Dict:
+    """Generate human-readable interpretation of annual influence."""
+    
+    dm_element = natal['day_master']['element']
+    dm_strength = natal['day_master']['strength_category']
+    annual_element = annual['element']
+    
+    # Overall rating
+    if is_favorable and not clashes:
+        rating = "Favorable"
+        rating_emoji = "🟢"
+        rating_score = 8
+    elif is_unfavorable and clashes:
+        rating = "Challenging"
+        rating_emoji = "🔴"
+        rating_score = 3
+    elif clashes:
+        rating = "Mixed - Watch for Conflicts"
+        rating_emoji = "🟡"
+        rating_score = 5
+    elif combines:
+        rating = "Harmonious"
+        rating_emoji = "🟢"
+        rating_score = 7
+    else:
+        rating = "Neutral"
+        rating_emoji = "🟡"
+        rating_score = 5
+    
+    # Element relationship description
+    element_desc = ""
+    if annual_element == dm_element:
+        element_desc = f"The {annual_element} year brings similar energy to your {dm_element} Day Master - a year of peer connections and competition."
+    elif annual_element in PRODUCTIVE_CYCLE and PRODUCTIVE_CYCLE[annual_element] == dm_element:
+        element_desc = f"{annual_element} produces {dm_element} - this year brings support and resources to strengthen you."
+    elif annual_element in CONTROLLING_CYCLE and CONTROLLING_CYCLE[annual_element] == dm_element:
+        element_desc = f"{annual_element} controls {dm_element} - this year brings pressure, authority figures, and potential career opportunities."
+    elif dm_element in PRODUCTIVE_CYCLE and PRODUCTIVE_CYCLE[dm_element] == annual_element:
+        element_desc = f"Your {dm_element} produces {annual_element} - a year of output, expression, and creativity."
+    elif dm_element in CONTROLLING_CYCLE and CONTROLLING_CYCLE[dm_element] == annual_element:
+        element_desc = f"Your {dm_element} controls {annual_element} - a year of wealth opportunities and resource management."
+    
+    # God-specific interpretation
+    god_interpretations = {
+        'Direct Wealth': "Focus on stable income, managing assets, and financial planning. Good for traditional business and investments.",
+        'Indirect Wealth': "Opportunities for windfall gains, side income, and speculative investments. Be alert to unexpected opportunities.",
+        'Direct Officer': "Career advancement, recognition from authority, and taking on leadership roles. Good for promotions and official matters.",
+        'Seven Killings': "Competitive pressure, need for decisive action. Good for bold moves and overcoming obstacles.",
+        'Direct Resource': "Learning, certifications, and support from mentors. Good for education and self-improvement.",
+        'Indirect Resource': "Unconventional learning, intuition, and spiritual growth. Good for creative problem-solving.",
+        'Friend': "Collaboration, partnerships, and peer support. Good for teamwork but watch for competition.",
+        'Rob Wealth': "Competition for resources, need to protect assets. Be cautious with partnerships.",
+        'Eating God': "Creative expression, enjoyment, and leisure. Good for artistic pursuits and relaxation.",
+        'Hurting Officer': "Breaking conventions, innovation, and speaking out. Good for change but watch your words."
+    }
+    
+    god_desc = god_interpretations.get(annual_god, "")
+    
+    # Clash/Combine specific advice
+    interaction_advice = ""
+    if clashes:
+        clash_pillars = [c['natal_pillar'] for c in clashes]
+        interaction_advice = f"⚠️ The annual {annual['animal']} clashes with your {', '.join(clash_pillars)} pillar(s). "
+        if 'Year' in clash_pillars:
+            interaction_advice += "Watch your social relationships and public image. "
+        if 'Month' in clash_pillars:
+            interaction_advice += "Career changes possible - prepare for transitions. "
+        if 'Day' in clash_pillars:
+            interaction_advice += "Personal relationships need extra care. Health attention advised. "
+        if 'Hour' in clash_pillars:
+            interaction_advice += "Children/subordinates may face challenges. Investment caution advised. "
+    elif combines:
+        combine_pillars = [c['natal_pillar'] for c in combines]
+        interaction_advice = f"✨ The annual {annual['animal']} harmonizes with your {', '.join(combine_pillars)} pillar(s), bringing smooth energy and opportunities."
+    
+    return {
+        'rating': rating,
+        'rating_emoji': rating_emoji,
+        'rating_score': rating_score,
+        'element_description': element_desc,
+        'god_description': god_desc,
+        'interaction_advice': interaction_advice,
+        'summary': f"{rating_emoji} {annual['year']} is a **{rating}** year for you. {element_desc}"
+    }
+
 # =============================================================================
 # DAY MASTER STRENGTH
 # =============================================================================
@@ -2363,7 +2924,17 @@ def analyze_bazi(
         # NEW: Five Structures
         'five_structures': calculate_five_structures(profiles),
         # NEW: Hidden Stems Analysis with explanations
-        'hidden_stems_analysis': get_pillar_hidden_stem_analysis(pillars, day_master)
+        'hidden_stems_analysis': get_pillar_hidden_stem_analysis(pillars, day_master),
+        # NEW: 12 Life Stages Wheel
+        'twelve_stages_wheel': get_twelve_stages_wheel(day_master),
+        # NEW: 6 Aspects Chart
+        'six_aspects': calculate_six_aspects(profiles, gender),
+        # NEW: Annual Analysis
+        'annual_analysis': calculate_annual_analysis(day_master, profiles, 2026),
+        # NEW: Monthly Influence
+        'monthly_influence': calculate_monthly_influence(day_master, 2026),
+        # NEW: Current Luck Pillar
+        'current_luck': get_current_luck_pillar([lp.to_dict() for lp in luck_pillars], birth_date.year, 2026)
     }
 
 # =============================================================================
