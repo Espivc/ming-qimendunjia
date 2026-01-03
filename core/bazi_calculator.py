@@ -449,12 +449,17 @@ SEASONAL_STRENGTH = {
 # ANNUAL PILLAR & ANALYSIS
 # =============================================================================
 
-def calculate_annual_pillar(year: int) -> Dict:
+def calculate_annual_pillar(year: int = 2026) -> Dict:
     """
     Calculate the Annual Pillar for a given year.
     
     2026 = 丙午 Bing Wu (Fire Horse)
     """
+    # DEFENSIVE: Ensure year is an integer
+    if year is None:
+        year = 2026
+    year = int(year)
+    
     # Year stem cycle: starts from Jia (index 0) at year 4 (e.g., 1984, 1994, 2004)
     stem_idx = (year - 4) % 10
     stem = HEAVENLY_STEMS[stem_idx]
@@ -1191,10 +1196,21 @@ def calculate_six_aspects(profile_counts: Dict[str, int], gender: str = 'male') 
 # =============================================================================
 
 
-def calculate_annual_analysis(day_master: str, natal_profiles: Dict[str, int], year: int = 2026) -> Dict:
+def calculate_annual_analysis(day_master: str = 'Jia', natal_profiles: Dict[str, int] = None, year: int = 2026) -> Dict:
     """
     Calculate annual influence comparing natal chart to annual pillar.
     """
+    # DEFENSIVE: Ensure parameters are valid
+    if year is None:
+        year = 2026
+    year = int(year)
+    
+    if day_master is None or day_master not in HEAVENLY_STEMS:
+        day_master = 'Jia'
+    
+    if natal_profiles is None:
+        natal_profiles = {}
+    
     annual_pillar = calculate_annual_pillar(year)
     
     # Calculate Ten Gods for annual stem and hidden stems
@@ -1253,10 +1269,18 @@ MONTH_STEM_START = {
 
 MONTH_BRANCHES = ['Yin', 'Mao', 'Chen', 'Si', 'Wu', 'Wei', 'Shen', 'You', 'Xu', 'Hai', 'Zi', 'Chou']
 
-def calculate_monthly_influence(day_master: str, year: int = 2026) -> List[Dict]:
+def calculate_monthly_influence(day_master: str = 'Jia', year: int = 2026) -> List[Dict]:
     """
     Calculate monthly pillars and their influence for a given year.
     """
+    # DEFENSIVE: Ensure year is an integer and day_master is valid
+    if year is None:
+        year = 2026
+    year = int(year)
+    
+    if day_master is None or day_master not in HEAVENLY_STEMS:
+        day_master = 'Jia'
+    
     # Get year stem to determine month stem cycle
     annual_pillar = calculate_annual_pillar(year)
     year_stem = annual_pillar['stem']
@@ -2154,7 +2178,7 @@ def calculate_five_structures(profile_counts: Dict[str, int]) -> Dict[str, Dict]
 # =============================================================================
 
 
-def analyze_annual_influence(natal_result: Dict, year: int) -> Dict:
+def analyze_annual_influence(natal_result: Dict, year: int = 2026) -> Dict:
     """
     Analyze how an annual pillar influences the natal chart.
     
@@ -2164,11 +2188,20 @@ def analyze_annual_influence(natal_result: Dict, year: int) -> Dict:
     - Impact on natal chart (clashes, combines)
     - Profile shift analysis
     """
+    # DEFENSIVE: Ensure year is valid
+    if year is None:
+        year = 2026
+    year = int(year)
+    
     annual = calculate_annual_pillar(year)
     
+    # DEFENSIVE: Ensure natal_result has required keys
+    if not natal_result or 'day_master' not in natal_result:
+        return {'error': 'Invalid natal result', 'year': year, 'pillar': annual}
+    
     # Get Day Master from natal
-    dm_stem = natal_result['day_master']['stem']
-    dm_element = natal_result['day_master']['element']
+    dm_stem = natal_result['day_master'].get('stem', 'Jia')
+    dm_element = natal_result['day_master'].get('element', 'Wood')
     
     # Calculate Ten God for annual stem relative to Day Master
     annual_stem_god = get_ten_god(dm_stem, annual['stem'])
