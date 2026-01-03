@@ -2,19 +2,21 @@
 ===============================================================================
 6_BaZi.py - Ming QiMenDunJia BaZi Pro Analysis Page
 ===============================================================================
-Version: 10.8 (Life Star + Five Structures + Detailed Guidance)
+Version: 10.9 (Annual Analysis + Six Aspects)
 Updated: 2026-01-03
 
 Features:
-- Four Pillars with Hidden Stems
+- Four Pillars with Hidden Stems & Explanations
 - Day Master Strength Analysis
 - Ten Profiles (Joey Yap method)
+- Annual Analysis 2026 (Natal vs Annual comparison)
+- Six Aspects Chart (Life Purpose, Financial, Relationship, etc.)
+- Monthly Influence 2026
 - Life Star / Gua Number (風水命卦)
 - Eight Mansions Directions (八宅)
 - Five Structures Radar (五型格)
 - Symbolic Stars (神煞)
 - Luck Pillars
-- Detailed explanations and guidance
 ===============================================================================
 """
 
@@ -42,6 +44,9 @@ try:
         get_gua_info,
         calculate_eight_mansions,
         calculate_five_structures,
+        get_pillar_hidden_stem_analysis,
+        explain_hidden_stems,
+        get_ten_god_meaning,
         determine_useful_gods,
         detect_clashes,
         detect_combines,
@@ -58,6 +63,7 @@ try:
         GUA_INFO,
         DIRECTION_MEANINGS,
         FIVE_STRUCTURES_INFO,
+        HIDDEN_STEM_ROLES,
     )
     IMPORT_SUCCESS = True
 except ImportError as e:
@@ -126,7 +132,7 @@ st.markdown("""
 
 def main():
     st.title("🎋 BaZi Pro Analysis")
-    st.caption("Four Pillars of Destiny • v10.8")
+    st.caption("Four Pillars of Destiny • v10.9")
     
     # Check import
     if not IMPORT_SUCCESS:
@@ -210,6 +216,169 @@ def main():
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+        
+        # Four Pillars Explanation
+        with st.expander("📖 Understanding Your Four Pillars (Natal Chart)"):
+            st.markdown("""
+            ### What Each Pillar Represents
+            
+            Your Four Pillars (八字) represent different aspects of your life and different time periods:
+            
+            | Pillar | Life Aspect | Time Period | Key Relationships |
+            |--------|-------------|-------------|-------------------|
+            | **Year 年柱** | Social image, ancestors, early childhood | Ages 1-16 | Grandparents, society |
+            | **Month 月柱** | Career, parents, growth period | Ages 17-32 | Parents, career foundation |
+            | **Day 日柱** | Self & spouse, prime years | Ages 33-48 | Self (stem), Spouse (branch) |
+            | **Hour 时柱** | Children, legacy, later years | Ages 49+ | Children, subordinates, investments |
+            
+            ### Reading Your Pillars
+            
+            **Heavenly Stems (天干)** - The top character represents:
+            - External expression, what others see
+            - Conscious actions and decisions
+            - The "visible" you
+            
+            **Earthly Branches (地支)** - The bottom character represents:
+            - Internal nature, hidden aspects
+            - Subconscious tendencies
+            - The "hidden" you
+            
+            **Hidden Stems (藏干)** - Stems within each branch:
+            - Latent talents and resources
+            - Secondary influences
+            - Potential waiting to be activated
+            
+            ### Your Specific Chart Analysis
+            """)
+            
+            # Personalized analysis
+            dm = result['day_master']
+            pillars = result['four_pillars']
+            
+            st.markdown(f"""
+            **Your Day Master: {dm['stem']} {pillars['day']['stem_cn']} ({dm['element']})**
+            
+            This is your core identity - the "self" in your chart. As a **{dm['polarity']} {dm['element']}** person:
+            """)
+            
+            # Day Master personality based on element
+            dm_descriptions = {
+                'Wood': "You are growth-oriented, benevolent, and seek expansion. Like a tree, you're rooted but always reaching upward. You value kindness and have strong moral principles.",
+                'Fire': "You are passionate, expressive, and charismatic. Like fire, you illuminate and inspire others. You're optimistic and bring warmth to relationships.",
+                'Earth': "You are stable, reliable, and nurturing. Like the earth, you provide support and grounding for others. You value trust and are known for your integrity.",
+                'Metal': "You are precise, disciplined, and principled. Like refined metal, you have strength and clarity. You value justice and have high standards.",
+                'Water': "You are adaptable, wise, and intuitive. Like water, you flow around obstacles and find your path. You're resourceful and have deep insights."
+            }
+            
+            st.info(dm_descriptions.get(dm['element'], ''))
+            
+            st.markdown(f"""
+            **Your Year Pillar: {pillars['year']['chinese']} ({pillars['year']['animal']})**
+            - Represents your social image and ancestral influence
+            - The {pillars['year']['animal']} year gives you {pillars['year']['element']} energy foundation
+            
+            **Your Month Pillar: {pillars['month']['chinese']} ({pillars['month']['animal']})**  
+            - Represents your career potential and parental influence
+            - Born in {pillars['month']['animal']} month, your career thrives with {pillars['month']['element']} activities
+            
+            **Your Hour Pillar: {pillars['hour']['chinese']} ({pillars['hour']['animal']})**
+            - Represents your children, legacy, and later life
+            - The {pillars['hour']['animal']} hour suggests your output style and what you leave behind
+            """)
+        
+        # =====================================================================
+        # HIDDEN STEMS DETAILED ANALYSIS
+        # =====================================================================
+        
+        with st.expander("🔍 Hidden Stems Analysis (藏干详解) - What's Inside Each Pillar"):
+            st.markdown("""
+            **Hidden Stems** are the Heavenly Stems contained within each Earthly Branch. 
+            They reveal the deeper influences and potentials hidden in each pillar of your chart.
+            
+            Each hidden stem is analyzed as a **Ten God** relative to your Day Master, showing what it means for you.
+            """)
+            
+            hs_analysis = result.get('hidden_stems_analysis', {})
+            dm = result['day_master']
+            
+            for pillar_name in ['year', 'month', 'day', 'hour']:
+                pillar_data = hs_analysis.get(pillar_name, {})
+                pillar_info = pillar_data.get('pillar_info', {})
+                
+                # Pillar header
+                st.markdown(f"""
+                ---
+                ### {pillar_info.get('name', pillar_name.title())} ({pillar_info.get('chinese', '')}) - {pillar_data.get('animal', '')} ({pillar_data.get('branch_cn', '')})
+                
+                **Life Period:** {pillar_info.get('represents', '')}
+                
+                **Influence:** {pillar_info.get('influence', '')}
+                """)
+                
+                # Hidden stems in this pillar
+                hidden_stems = pillar_data.get('hidden_stems', [])
+                
+                for hs in hidden_stems:
+                    ten_god_color = ELEMENT_COLORS.get(hs['element'], '#888')
+                    meaning = hs.get('meaning', {})
+                    
+                    st.markdown(f"""
+                    <div style="padding: 15px; margin: 10px 0; border-radius: 10px; 
+                                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                                border-left: 4px solid {ten_god_color};">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 20px; font-weight: bold; color: {ten_god_color};">
+                                {hs['stem_cn']} {hs['stem']}
+                            </span>
+                            <span style="background: {ten_god_color}22; padding: 4px 12px; border-radius: 15px; color: {ten_god_color};">
+                                {hs['role']} ({hs['role_cn']})
+                            </span>
+                        </div>
+                        <div style="margin-top: 8px; color: #aaa;">
+                            {hs['element']} {hs['polarity']} → <strong style="color: white;">{hs['ten_god']}</strong> ({hs['ten_god_cn']})
+                        </div>
+                        <div style="margin-top: 12px; padding: 10px; background: #ffffff11; border-radius: 8px;">
+                            <div style="font-weight: bold; color: {ten_god_color};">💡 {meaning.get('keyword', '')}</div>
+                            <div style="margin-top: 5px; font-size: 13px; color: #ccc;">
+                                <strong>Represents:</strong> {meaning.get('represents', '')}
+                            </div>
+                            <div style="margin-top: 5px; font-size: 13px; color: #ccc;">
+                                <strong>People:</strong> {meaning.get('people', '')}
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Expandable details for each hidden stem
+                    with st.expander(f"More about {hs['ten_god']} ({hs['ten_god_cn']})"):
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.markdown(f"""
+                            **✅ Positive Traits:**
+                            {meaning.get('positive', 'N/A')}
+                            """)
+                        with col2:
+                            st.markdown(f"""
+                            **⚠️ Negative Traits:**
+                            {meaning.get('negative', 'N/A')}
+                            """)
+                        st.markdown(f"""
+                        **Life Aspect:** {meaning.get('life_aspect', 'N/A')}
+                        
+                        **Traits:** {meaning.get('traits', 'N/A')}
+                        """)
+            
+            # Summary section
+            st.markdown("""
+            ---
+            ### 📊 How to Use This Information
+            
+            1. **Identify Patterns**: Notice which Ten Gods appear multiple times - these are dominant themes in your life
+            2. **Understand Timing**: Hidden stems activate during certain luck pillars and annual pillars
+            3. **Relationship Insights**: The people associated with each Ten God show who influences you at different life stages
+            4. **Career Guidance**: Multiple Wealth stars suggest business potential; multiple Resource stars suggest teaching/advisory roles
+            5. **Personal Development**: Weak or absent Ten Gods indicate areas for conscious development
+            """)
         
         # =====================================================================
         # DAY MASTER ANALYSIS
@@ -305,6 +474,191 @@ def main():
             - Based on {dominant}
             - {TEN_GODS_CN.get(dominant, '')}
             """)
+        
+        # =====================================================================
+        # ANNUAL ANALYSIS (2026)
+        # =====================================================================
+        
+        st.markdown("---")
+        st.markdown('<h3 class="section-header">📅 Annual Analysis 2026 流年分析</h3>', unsafe_allow_html=True)
+        
+        # Import annual functions
+        try:
+            from core.bazi_calculator import (
+                calculate_annual_pillar,
+                calculate_annual_ten_gods,
+                calculate_annual_profile_influence,
+                calculate_six_aspects,
+                calculate_annual_six_aspects,
+                calculate_monthly_influence
+            )
+            
+            # Calculate Annual Pillar for 2026
+            annual_year = 2026  # Could make this selectable
+            annual_pillar = calculate_annual_pillar(annual_year)
+            day_master_stem = result['day_master']['stem']
+            
+            # Annual Ten Gods
+            annual_gods = calculate_annual_ten_gods(day_master_stem, annual_pillar)
+            
+            # Annual Profile Influence
+            annual_profile_pcts = calculate_annual_profile_influence(
+                profiles['counts'], 
+                annual_pillar, 
+                day_master_stem
+            )
+            
+            # Six Aspects - Natal
+            natal_six_aspects = calculate_six_aspects(profiles['percentages'])
+            
+            # Six Aspects - Annual
+            annual_six_aspects = calculate_annual_six_aspects(natal_six_aspects, annual_profile_pcts)
+            
+            # Display Annual Pillar
+            col1, col2 = st.columns([1, 2])
+            
+            with col1:
+                ap_color = ELEMENT_COLORS.get(annual_pillar['element'], '#DC143C')
+                st.markdown(f"""
+                <div style="text-align: center; padding: 15px; border-radius: 10px;
+                            background: #1a1a2e; border: 2px solid {ap_color};">
+                    <div style="font-size: 12px; color: #888;">{annual_year} Annual Pillar</div>
+                    <div style="font-size: 36px; color: {ap_color}; font-weight: bold;">
+                        {annual_pillar['stem_cn']}
+                    </div>
+                    <div style="font-size: 10px;">{annual_pillar['stem']} ({annual_pillar['element']})</div>
+                    <hr style="border-color: {ap_color}; margin: 8px 0;">
+                    <div style="font-size: 28px;">{annual_pillar['branch_cn']}</div>
+                    <div style="font-size: 10px;">{annual_pillar['branch']} ({annual_pillar['animal']})</div>
+                    <div style="font-size: 10px; margin-top: 5px; color: #888;">
+                        藏干: {', '.join(annual_pillar['hidden_stems'])}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                # Annual influence explanation
+                st.markdown(f"**{annual_year} Annual Influence for {result['day_master']['stem']} Day Master:**")
+                
+                stem_god = annual_gods['stem_god']
+                hidden_info = ', '.join([f"{h['stem']}={h['god']}" for h in annual_gods['hidden_gods']])
+                
+                st.markdown(f"""
+                - **Annual Stem ({annual_pillar['stem_cn']}):** {stem_god}
+                - **Hidden Stems:** {hidden_info}
+                """)
+                
+                # Interpretation
+                if stem_god in ['Seven Killings', 'Direct Officer']:
+                    st.warning(f"💼 **Career & Authority Year:** The {stem_god} brings pressure but also opportunities for recognition and advancement. Stay disciplined.")
+                elif stem_god in ['Direct Wealth', 'Indirect Wealth']:
+                    st.success(f"💰 **Wealth Year:** The {stem_god} indicates financial opportunities. Good for investments and business expansion.")
+                elif stem_god in ['Direct Resource', 'Indirect Resource']:
+                    st.info(f"📚 **Learning Year:** The {stem_god} favors education, self-improvement, and receiving help from mentors.")
+                elif stem_god in ['Eating God', 'Hurting Officer']:
+                    st.info(f"🎨 **Creative Year:** The {stem_god} enhances creativity and self-expression. Good for artistic pursuits.")
+                elif stem_god in ['Friend', 'Rob Wealth']:
+                    st.warning(f"🤝 **Social Year:** The {stem_god} brings social activities but watch for competition and shared resources.")
+            
+            # Six Aspects Comparison Chart
+            st.markdown("### 📊 Six Aspects: Natal vs 2026")
+            st.caption("Comparing your birth chart energy with 2026 annual influence")
+            
+            # Create comparison display
+            aspects_order = ['Life Purpose', 'Financial', 'Relationship', 'Family', 'Wellness', 'Contribution']
+            
+            for aspect in aspects_order:
+                natal_data = natal_six_aspects.get(aspect, {})
+                annual_data = annual_six_aspects.get(aspect, {})
+                
+                natal_score = natal_data.get('score', 0)
+                annual_score = annual_data.get('score', 0)
+                change = annual_data.get('change', 0)
+                
+                # Determine change indicator
+                if change > 5:
+                    change_icon = "↑"
+                    change_color = "#228B22"
+                elif change < -5:
+                    change_icon = "↓"
+                    change_color = "#DC143C"
+                else:
+                    change_icon = "→"
+                    change_color = "#888"
+                
+                st.markdown(f"""
+                <div style="margin: 8px 0; padding: 10px; background: #1a1a2e; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: bold; width: 120px;">{aspect}</span>
+                        <span style="color: #888; width: 60px;">{natal_data.get('chinese', '')}</span>
+                        <div style="flex: 1; display: flex; align-items: center; margin: 0 15px;">
+                            <div style="flex: 1; background: #333; border-radius: 4px; height: 16px; margin-right: 10px;">
+                                <div style="background: #4a4a6a; width: {natal_score}%; height: 100%; border-radius: 4px;"></div>
+                            </div>
+                            <span style="width: 40px; text-align: right; color: #888;">{natal_score:.0f}%</span>
+                        </div>
+                        <span style="color: {change_color}; font-size: 18px; width: 30px; text-align: center;">{change_icon}</span>
+                        <div style="flex: 1; display: flex; align-items: center; margin: 0 15px;">
+                            <div style="flex: 1; background: #333; border-radius: 4px; height: 16px; margin-right: 10px;">
+                                <div style="background: #DAA520; width: {annual_score}%; height: 100%; border-radius: 4px;"></div>
+                            </div>
+                            <span style="width: 40px; text-align: right;">{annual_score:.0f}%</span>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.caption("Gray bars = Natal | Gold bars = 2026")
+            
+            # Ten Profiles Natal vs Annual Comparison
+            with st.expander("📊 Ten Profiles: Natal vs 2026 Comparison"):
+                st.markdown("| Profile | Natal | 2026 | Change |")
+                st.markdown("|---------|-------|------|--------|")
+                
+                for god in ['Direct Officer', 'Indirect Resource', 'Seven Killings', 'Direct Resource',
+                           'Friend', 'Eating God', 'Rob Wealth', 'Direct Wealth', 'Indirect Wealth', 'Hurting Officer']:
+                    natal_pct = profiles['percentages'].get(god, 0)
+                    annual_pct = annual_profile_pcts.get(god, 0)
+                    diff = annual_pct - natal_pct
+                    
+                    if natal_pct > 0 or annual_pct > 0:
+                        diff_str = f"+{diff:.0f}%" if diff > 0 else f"{diff:.0f}%"
+                        st.markdown(f"| {god} | {natal_pct:.0f}% | {annual_pct:.0f}% | {diff_str} |")
+            
+            # Monthly Influence Preview
+            with st.expander("📅 2026 Monthly Influence Preview"):
+                monthly = calculate_monthly_influence(annual_year, day_master_stem)
+                
+                cols = st.columns(6)
+                for i, month in enumerate(monthly[:6]):
+                    with cols[i]:
+                        m_color = ELEMENT_COLORS.get(month['element'], '#888')
+                        st.markdown(f"""
+                        <div style="text-align: center; padding: 8px; border-radius: 8px; 
+                                    background: #1a1a2e; border: 1px solid {m_color}; margin: 2px;">
+                            <div style="font-size: 10px; color: #888;">{month['name']}</div>
+                            <div style="font-size: 16px; color: {m_color};">{month['stem_cn']}{month['branch_cn']}</div>
+                            <div style="font-size: 9px;">{month['animal']}</div>
+                            <div style="font-size: 9px; color: #888;">{month['stem_god'][:6]}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
+                cols2 = st.columns(6)
+                for i, month in enumerate(monthly[6:]):
+                    with cols2[i]:
+                        m_color = ELEMENT_COLORS.get(month['element'], '#888')
+                        st.markdown(f"""
+                        <div style="text-align: center; padding: 8px; border-radius: 8px;
+                                    background: #1a1a2e; border: 1px solid {m_color}; margin: 2px;">
+                            <div style="font-size: 10px; color: #888;">{month['name']}</div>
+                            <div style="font-size: 16px; color: {m_color};">{month['stem_cn']}{month['branch_cn']}</div>
+                            <div style="font-size: 9px;">{month['animal']}</div>
+                            <div style="font-size: 9px; color: #888;">{month['stem_god'][:6]}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+        
+        except ImportError as e:
+            st.warning(f"Annual analysis module not available: {e}")
         
         # =====================================================================
         # SYMBOLIC STARS (NEW!)
