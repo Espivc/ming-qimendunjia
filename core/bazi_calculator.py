@@ -458,6 +458,297 @@ ELEMENT_COLORS = {
 }
 
 # =============================================================================
+# LIFE STAR / GUA NUMBER (風水命卦)
+# =============================================================================
+
+GUA_INFO = {
+    1: {
+        'number': 1,
+        'name': 'Kan',
+        'chinese': '坎',
+        'element': 'Water',
+        'color': 'White',
+        'color_cn': '一白',
+        'direction': 'North',
+        'trigram': '☵',
+        'group': 'East',
+        'description': 'The Abysmal, Water. Represents adaptability, wisdom, and flow. Associated with career and life path.'
+    },
+    2: {
+        'number': 2,
+        'name': 'Kun',
+        'chinese': '坤',
+        'element': 'Earth',
+        'color': 'Black',
+        'color_cn': '二黑',
+        'direction': 'Southwest',
+        'trigram': '☷',
+        'group': 'West',
+        'description': 'The Receptive, Earth. Represents nurturing, relationships, and motherhood. Associated with partnerships.'
+    },
+    3: {
+        'number': 3,
+        'name': 'Zhen',
+        'chinese': '震',
+        'element': 'Wood',
+        'color': 'Jade',
+        'color_cn': '三碧',
+        'direction': 'East',
+        'trigram': '☳',
+        'group': 'East',
+        'description': 'The Arousing, Thunder. Represents growth, new beginnings, and ambition. Associated with family and health.'
+    },
+    4: {
+        'number': 4,
+        'name': 'Xun',
+        'chinese': '巽',
+        'element': 'Wood',
+        'color': 'Green',
+        'color_cn': '四綠',
+        'direction': 'Southeast',
+        'trigram': '☴',
+        'group': 'East',
+        'description': 'The Gentle, Wind. Represents flexibility, communication, and wealth accumulation. Associated with prosperity and romance.'
+    },
+    5: {
+        'number': 5,
+        'name': 'Center',
+        'chinese': '中',
+        'element': 'Earth',
+        'color': 'Yellow',
+        'color_cn': '五黃',
+        'direction': 'Center',
+        'trigram': '',
+        'group': 'Variable',
+        'description': 'The Center. Males default to Kun (2), females default to Gen (8). Represents balance and central authority.'
+    },
+    6: {
+        'number': 6,
+        'name': 'Qian',
+        'chinese': '乾',
+        'element': 'Metal',
+        'color': 'White',
+        'color_cn': '六白',
+        'direction': 'Northwest',
+        'trigram': '☰',
+        'group': 'West',
+        'description': 'The Creative, Heaven. Represents leadership, authority, and fatherhood. Associated with mentors and helpful people.'
+    },
+    7: {
+        'number': 7,
+        'name': 'Dui',
+        'chinese': '兌',
+        'element': 'Metal',
+        'color': 'Red',
+        'color_cn': '七赤',
+        'direction': 'West',
+        'trigram': '☱',
+        'group': 'West',
+        'description': 'The Joyous, Lake. Represents joy, pleasure, and communication. Associated with children and creativity.'
+    },
+    8: {
+        'number': 8,
+        'name': 'Gen',
+        'chinese': '艮',
+        'element': 'Earth',
+        'color': 'White',
+        'color_cn': '八白',
+        'direction': 'Northeast',
+        'trigram': '☶',
+        'group': 'West',
+        'description': 'The Still, Mountain. Represents stability, knowledge, and self-cultivation. Associated with education and spirituality.'
+    },
+    9: {
+        'number': 9,
+        'name': 'Li',
+        'chinese': '離',
+        'element': 'Fire',
+        'color': 'Purple',
+        'color_cn': '九紫',
+        'direction': 'South',
+        'trigram': '☲',
+        'group': 'East',
+        'description': 'The Clinging, Fire. Represents fame, recognition, and illumination. Associated with reputation and visibility.'
+    }
+}
+
+# =============================================================================
+# EIGHT MANSIONS (八宅) - Directions for each Gua
+# =============================================================================
+
+# Direction meanings
+DIRECTION_MEANINGS = {
+    'Sheng Qi': {
+        'chinese': '生氣',
+        'english': 'Life Generating',
+        'type': 'Favorable',
+        'rank': 1,
+        'description': 'Best for main door, bedroom, and study. Brings vitality, success, and good fortune. Excellent for career advancement and wealth generation.',
+        'use_for': ['Main entrance', 'Master bedroom', 'Home office', 'Important meetings']
+    },
+    'Tian Yi': {
+        'chinese': '天醫',
+        'english': 'Heavenly Doctor',
+        'type': 'Favorable',
+        'rank': 2,
+        'description': 'Healing energy. Good for bedroom if you have health issues. Attracts helpful people and improves relationships with authority figures.',
+        'use_for': ['Bedroom for health recovery', 'Kitchen', 'Dining area', 'Medical consultations']
+    },
+    'Yan Nian': {
+        'chinese': '延年',
+        'english': 'Longevity',
+        'type': 'Favorable',
+        'rank': 3,
+        'description': 'Promotes harmonious relationships and longevity. Excellent for romance and marriage luck. Stabilizes existing relationships.',
+        'use_for': ['Couple bedroom', 'Living room', 'Family gatherings', 'Relationship discussions']
+    },
+    'Fu Wei': {
+        'chinese': '伏位',
+        'english': 'Stability',
+        'type': 'Favorable',
+        'rank': 4,
+        'description': 'Provides stability and peace. Good for meditation and personal development. Not the strongest but reliable and calming.',
+        'use_for': ['Meditation space', 'Study', 'Personal retreat', 'Quiet contemplation']
+    },
+    'Huo Hai': {
+        'chinese': '禍害',
+        'english': 'Mishaps',
+        'type': 'Unfavorable',
+        'rank': 5,
+        'description': 'Causes minor setbacks, arguments, and frustrations. Avoid for important activities. Can lead to misunderstandings and small accidents.',
+        'avoid_for': ['Main door', 'Bedroom', 'Important work', 'Negotiations']
+    },
+    'Wu Gui': {
+        'chinese': '五鬼',
+        'english': 'Five Ghosts',
+        'type': 'Unfavorable',
+        'rank': 6,
+        'description': 'Brings backstabbing, betrayal, and fire hazards. Can cause theft and loss of money. Be cautious of people from this direction.',
+        'avoid_for': ['Storing valuables', 'Trusting strangers', 'Financial dealings', 'Fire placement']
+    },
+    'Liu Sha': {
+        'chinese': '六煞',
+        'english': 'Six Killings',
+        'type': 'Unfavorable',
+        'rank': 7,
+        'description': 'Affects relationships negatively. Can cause scandals, affairs, and legal problems. Impacts reputation and romantic relationships.',
+        'avoid_for': ['Bedroom', 'Romantic encounters', 'Legal matters', 'Public appearances']
+    },
+    'Jue Ming': {
+        'chinese': '絕命',
+        'english': 'Life Threatening',
+        'type': 'Unfavorable',
+        'rank': 8,
+        'description': 'The worst direction. Brings serious misfortune, health problems, and financial disasters. Absolutely avoid for sleeping or main door.',
+        'avoid_for': ['Everything important', 'Sleeping', 'Main entrance', 'Business activities']
+    }
+}
+
+# Eight Mansions direction mapping for each Gua
+# Format: {gua_number: {direction_name: compass_direction}}
+EIGHT_MANSIONS = {
+    1: {  # Kan - Water
+        'Sheng Qi': 'Southeast', 'Tian Yi': 'East', 'Yan Nian': 'South', 'Fu Wei': 'North',
+        'Huo Hai': 'West', 'Wu Gui': 'Northeast', 'Liu Sha': 'Northwest', 'Jue Ming': 'Southwest'
+    },
+    2: {  # Kun - Earth
+        'Sheng Qi': 'Northeast', 'Tian Yi': 'West', 'Yan Nian': 'Northwest', 'Fu Wei': 'Southwest',
+        'Huo Hai': 'East', 'Wu Gui': 'Southeast', 'Liu Sha': 'South', 'Jue Ming': 'North'
+    },
+    3: {  # Zhen - Wood
+        'Sheng Qi': 'South', 'Tian Yi': 'North', 'Yan Nian': 'Southeast', 'Fu Wei': 'East',
+        'Huo Hai': 'Southwest', 'Wu Gui': 'Northwest', 'Liu Sha': 'Northeast', 'Jue Ming': 'West'
+    },
+    4: {  # Xun - Wood (Ben's Gua)
+        'Sheng Qi': 'North', 'Tian Yi': 'South', 'Yan Nian': 'East', 'Fu Wei': 'Southeast',
+        'Huo Hai': 'Northwest', 'Wu Gui': 'Southwest', 'Liu Sha': 'West', 'Jue Ming': 'Northeast'
+    },
+    6: {  # Qian - Metal
+        'Sheng Qi': 'West', 'Tian Yi': 'Northeast', 'Yan Nian': 'Southwest', 'Fu Wei': 'Northwest',
+        'Huo Hai': 'Southeast', 'Wu Gui': 'East', 'Liu Sha': 'South', 'Jue Ming': 'North'
+    },
+    7: {  # Dui - Metal
+        'Sheng Qi': 'Northwest', 'Tian Yi': 'Southwest', 'Yan Nian': 'Northeast', 'Fu Wei': 'West',
+        'Huo Hai': 'South', 'Wu Gui': 'North', 'Liu Sha': 'East', 'Jue Ming': 'Southeast'
+    },
+    8: {  # Gen - Earth
+        'Sheng Qi': 'Southwest', 'Tian Yi': 'Northwest', 'Yan Nian': 'West', 'Fu Wei': 'Northeast',
+        'Huo Hai': 'North', 'Wu Gui': 'South', 'Liu Sha': 'Southeast', 'Jue Ming': 'East'
+    },
+    9: {  # Li - Fire
+        'Sheng Qi': 'East', 'Tian Yi': 'Southeast', 'Yan Nian': 'North', 'Fu Wei': 'South',
+        'Huo Hai': 'Northeast', 'Wu Gui': 'West', 'Liu Sha': 'Southwest', 'Jue Ming': 'Northwest'
+    }
+}
+
+# =============================================================================
+# FIVE STRUCTURES (五型格)
+# =============================================================================
+
+FIVE_STRUCTURES_INFO = {
+    'Wealth': {
+        'element': 'Wood',
+        'chinese': '財',
+        'structure_name': '管理型',
+        'english_name': 'Manager',
+        'gods': ['Direct Wealth', 'Indirect Wealth'],
+        'description': 'Wealth structure people are natural managers and entrepreneurs. They excel at identifying opportunities, managing resources, and creating value. Strong focus on financial success and material achievement.',
+        'strengths': ['Business acumen', 'Resource management', 'Opportunity recognition', 'Practical decision-making'],
+        'challenges': ['May prioritize money over relationships', 'Risk of overwork', 'Can be too materialistic'],
+        'careers': ['Business owner', 'Manager', 'Investor', 'Sales', 'Real estate', 'Finance'],
+        'advice': 'Balance wealth pursuit with relationships and personal fulfillment. Your ability to create value is a gift - use it wisely.'
+    },
+    'Influence': {
+        'element': 'Fire',
+        'chinese': '官',
+        'structure_name': '忠誠型',
+        'english_name': 'Supporters',
+        'gods': ['Direct Officer', 'Seven Killings'],
+        'description': 'Influence structure people are natural leaders with authority and charisma. They command respect and can mobilize others effectively. Strong sense of duty and responsibility.',
+        'strengths': ['Leadership ability', 'Authority presence', 'Strategic thinking', 'Discipline'],
+        'challenges': ['Can be too controlling', 'Pressure from responsibilities', 'May struggle with flexibility'],
+        'careers': ['Government', 'Military', 'Law enforcement', 'Corporate executive', 'Politics', 'Judge'],
+        'advice': 'Your natural authority attracts followers. Lead with integrity and remember that true power comes from serving others.'
+    },
+    'Resources': {
+        'element': 'Earth',
+        'chinese': '印',
+        'structure_name': '智慧型',
+        'english_name': 'Thinkers',
+        'gods': ['Direct Resource', 'Indirect Resource'],
+        'description': 'Resource structure people are deep thinkers and knowledge seekers. They excel at learning, analysis, and providing wisdom to others. Strong intellectual and spiritual orientation.',
+        'strengths': ['Analytical thinking', 'Knowledge acquisition', 'Teaching ability', 'Patience'],
+        'challenges': ['May overthink', 'Can be too passive', 'Risk of analysis paralysis'],
+        'careers': ['Teacher', 'Professor', 'Researcher', 'Writer', 'Consultant', 'Spiritual guide'],
+        'advice': 'Your wisdom is valuable - share it generously. Balance thinking with action, and trust your intuition alongside your analysis.'
+    },
+    'Companion': {
+        'element': 'Metal',
+        'chinese': '比',
+        'structure_name': '交際型',
+        'english_name': 'Connectors',
+        'gods': ['Friend', 'Rob Wealth'],
+        'description': 'Companion structure people are natural networkers and team players. They build strong relationships and thrive in collaborative environments. Strong sense of loyalty and camaraderie.',
+        'strengths': ['Networking', 'Team building', 'Loyalty', 'Social intelligence'],
+        'challenges': ['May be too dependent on others', 'Competition with peers', 'Boundary issues'],
+        'careers': ['HR', 'Public relations', 'Team sports', 'Community organizing', 'Partnerships', 'Networking roles'],
+        'advice': 'Your strength lies in connections. Choose your allies wisely and maintain healthy boundaries while building your network.'
+    },
+    'Output': {
+        'element': 'Water',
+        'chinese': '食',
+        'structure_name': '創作型',
+        'english_name': 'Creators',
+        'gods': ['Eating God', 'Hurting Officer'],
+        'description': 'Output structure people are natural creators and expressers. They have strong artistic abilities and need outlets for self-expression. Innovative and often unconventional.',
+        'strengths': ['Creativity', 'Expression', 'Innovation', 'Artistic talent'],
+        'challenges': ['May be too unconventional', 'Emotional sensitivity', 'Can be undisciplined'],
+        'careers': ['Artist', 'Designer', 'Writer', 'Performer', 'Inventor', 'Content creator', 'Chef'],
+        'advice': 'Your creative gifts are meant to be shared. Find healthy outlets for expression and dont let criticism dim your light.'
+    }
+}
+
+# =============================================================================
 # ENUMS
 # =============================================================================
 
@@ -1039,6 +1330,164 @@ def calculate_life_stages_for_chart(pillars: Dict[str, Pillar]) -> Dict[str, Dic
     
     return stages
 
+
+# =============================================================================
+# GUA NUMBER CALCULATION (風水命卦)
+# =============================================================================
+
+def calculate_gua_number(birth_year: int, gender: str) -> int:
+    """
+    Calculate the Life Star / Gua Number (風水命卦).
+    
+    Formula for people born 1900-1999:
+    - Male: (100 - last two digits) % 9, if 0 then 9, if 5 then 2
+    - Female: (last two digits - 4) % 9, if 0 then 9, if 5 then 8
+    
+    Formula for people born 2000+:
+    - Male: (100 - (year - 2000)) % 9, if 0 then 9, if 5 then 2
+    - Female: ((year - 2000) + 6) % 9, if 0 then 9, if 5 then 8
+    
+    Ben's case: 1978, Male
+    (100 - 78) % 9 = 22 % 9 = 4 ✓
+    """
+    is_male = gender.lower() == 'male'
+    
+    if birth_year >= 2000:
+        year_offset = birth_year - 2000
+        if is_male:
+            gua = (100 - year_offset) % 9
+        else:
+            gua = (year_offset + 6) % 9
+    else:
+        last_two = birth_year % 100
+        if is_male:
+            gua = (100 - last_two) % 9
+        else:
+            gua = (last_two - 4) % 9
+    
+    # Handle special cases
+    if gua == 0:
+        gua = 9
+    
+    # Gua 5 doesn't exist - redirect
+    if gua == 5:
+        gua = 2 if is_male else 8
+    
+    return gua
+
+
+def get_gua_info(gua_number: int) -> Dict:
+    """Get detailed information about a Gua number."""
+    return GUA_INFO.get(gua_number, GUA_INFO[1])
+
+
+def calculate_eight_mansions(gua_number: int) -> Dict:
+    """
+    Calculate Eight Mansions directions for a given Gua.
+    Returns favorable and unfavorable directions with details.
+    """
+    # Handle Gua 5 redirect
+    if gua_number == 5:
+        gua_number = 2  # Default to Kun for display
+    
+    directions = EIGHT_MANSIONS.get(gua_number, EIGHT_MANSIONS[1])
+    
+    favorable = []
+    unfavorable = []
+    
+    for direction_name, compass in directions.items():
+        info = DIRECTION_MEANINGS[direction_name].copy()
+        info['compass'] = compass
+        info['name'] = direction_name
+        
+        if info['type'] == 'Favorable':
+            favorable.append(info)
+        else:
+            unfavorable.append(info)
+    
+    # Sort by rank
+    favorable.sort(key=lambda x: x['rank'])
+    unfavorable.sort(key=lambda x: x['rank'])
+    
+    return {
+        'favorable': favorable,
+        'unfavorable': unfavorable,
+        'all_directions': directions
+    }
+
+
+# =============================================================================
+# FIVE STRUCTURES CALCULATION (五型格)
+# =============================================================================
+
+def calculate_five_structures(profile_counts: Dict[str, int]) -> Dict[str, Dict]:
+    """
+    Calculate the Five Structures from Ten Gods distribution.
+    
+    Mapping:
+    - Wood (財 Wealth) = Direct Wealth + Indirect Wealth
+    - Fire (官 Influence) = Direct Officer + Seven Killings  
+    - Earth (印 Resource) = Direct Resource + Indirect Resource
+    - Metal (比 Companion) = Friend + Rob Wealth
+    - Water (食 Output) = Eating God + Hurting Officer
+    """
+    structures = {
+        'Wealth': {
+            'score': profile_counts.get('Direct Wealth', 0) + profile_counts.get('Indirect Wealth', 0),
+            'element': 'Wood',
+            'chinese': '財',
+            'structure_name': '管理型',
+            'english_name': 'Manager'
+        },
+        'Influence': {
+            'score': profile_counts.get('Direct Officer', 0) + profile_counts.get('Seven Killings', 0),
+            'element': 'Fire',
+            'chinese': '官',
+            'structure_name': '忠誠型',
+            'english_name': 'Supporters'
+        },
+        'Resources': {
+            'score': profile_counts.get('Direct Resource', 0) + profile_counts.get('Indirect Resource', 0),
+            'element': 'Earth',
+            'chinese': '印',
+            'structure_name': '智慧型',
+            'english_name': 'Thinkers'
+        },
+        'Companion': {
+            'score': profile_counts.get('Friend', 0) + profile_counts.get('Rob Wealth', 0),
+            'element': 'Metal',
+            'chinese': '比',
+            'structure_name': '交際型',
+            'english_name': 'Connectors'
+        },
+        'Output': {
+            'score': profile_counts.get('Eating God', 0) + profile_counts.get('Hurting Officer', 0),
+            'element': 'Water',
+            'chinese': '食',
+            'structure_name': '創作型',
+            'english_name': 'Creators'
+        }
+    }
+    
+    # Calculate percentages (normalize to 100 for highest)
+    max_score = max(s['score'] for s in structures.values()) if structures else 1
+    if max_score == 0:
+        max_score = 1
+    
+    for name, data in structures.items():
+        data['percentage'] = round((data['score'] / max_score) * 100, 0) if max_score > 0 else 0
+        data['info'] = FIVE_STRUCTURES_INFO.get(name, {})
+    
+    # Determine dominant structure
+    dominant = max(structures.items(), key=lambda x: x[1]['score'])
+    
+    return {
+        'structures': structures,
+        'dominant': dominant[0],
+        'dominant_info': FIVE_STRUCTURES_INFO.get(dominant[0], {}),
+        'dominant_element': dominant[1]['element']
+    }
+
 # =============================================================================
 # DAY MASTER STRENGTH
 # =============================================================================
@@ -1421,7 +1870,16 @@ def analyze_bazi(
             'branch': pillars['year'].branch,
             'animal': celestial_animal,
             'chinese': '生肖'
-        }
+        },
+        # NEW: Life Star / Gua
+        'life_star': {
+            'gua_number': calculate_gua_number(birth_date.year, gender),
+            'gua_info': get_gua_info(calculate_gua_number(birth_date.year, gender))
+        },
+        # NEW: Eight Mansions
+        'eight_mansions': calculate_eight_mansions(calculate_gua_number(birth_date.year, gender)),
+        # NEW: Five Structures
+        'five_structures': calculate_five_structures(profiles)
     }
 
 # =============================================================================
