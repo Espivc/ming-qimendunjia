@@ -2,10 +2,19 @@
 ===============================================================================
 6_BaZi.py - Ming QiMenDunJia BaZi Pro Analysis Page
 ===============================================================================
-Version: 10.7 (Joey Yap Aligned)
+Version: 10.8 (Life Star + Five Structures + Detailed Guidance)
 Updated: 2026-01-03
 
-This page imports calculations from core/bazi_calculator.py
+Features:
+- Four Pillars with Hidden Stems
+- Day Master Strength Analysis
+- Ten Profiles (Joey Yap method)
+- Life Star / Gua Number (風水命卦)
+- Eight Mansions Directions (八宅)
+- Five Structures Radar (五型格)
+- Symbolic Stars (神煞)
+- Luck Pillars
+- Detailed explanations and guidance
 ===============================================================================
 """
 
@@ -29,6 +38,10 @@ try:
         calculate_profile_percentages_joey_yap,
         calculate_symbolic_stars,
         calculate_life_stages_for_chart,
+        calculate_gua_number,
+        get_gua_info,
+        calculate_eight_mansions,
+        calculate_five_structures,
         determine_useful_gods,
         detect_clashes,
         detect_combines,
@@ -42,6 +55,9 @@ try:
         PROFILE_NAMES,
         TEN_GODS_CN,
         STEM_POLARITY,
+        GUA_INFO,
+        DIRECTION_MEANINGS,
+        FIVE_STRUCTURES_INFO,
     )
     IMPORT_SUCCESS = True
 except ImportError as e:
@@ -110,7 +126,7 @@ st.markdown("""
 
 def main():
     st.title("🎋 BaZi Pro Analysis")
-    st.caption("Four Pillars of Destiny • v10.7")
+    st.caption("Four Pillars of Destiny • v10.8")
     
     # Check import
     if not IMPORT_SUCCESS:
@@ -332,6 +348,256 @@ def main():
             if stars.get('solitary'):
                 sol = stars['solitary']
                 st.markdown(f"- 孤辰 Solitary: **{sol['animal']}** ({sol['branch']})")
+        
+        # =====================================================================
+        # LIFE STAR / GUA NUMBER (風水命卦)
+        # =====================================================================
+        
+        st.markdown("---")
+        st.markdown('<h3 class="section-header">🌟 Life Star 風水命卦</h3>', unsafe_allow_html=True)
+        
+        life_star = result.get('life_star', {})
+        gua_info = life_star.get('gua_info', {})
+        gua_number = life_star.get('gua_number', 0)
+        
+        col1, col2 = st.columns([1, 2])
+        
+        with col1:
+            # Display Gua card
+            gua_color = ELEMENT_COLORS.get(gua_info.get('element', 'Earth'), '#DAA520')
+            st.markdown(f"""
+            <div style="text-align: center; padding: 20px; border-radius: 15px; 
+                        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                        border: 3px solid {gua_color};">
+                <div style="font-size: 48px;">{gua_info.get('trigram', '☰')}</div>
+                <div style="font-size: 36px; color: {gua_color}; font-weight: bold;">
+                    {gua_number}
+                </div>
+                <div style="font-size: 18px; color: {gua_color};">
+                    {gua_info.get('color_cn', '')}
+                </div>
+                <div style="font-size: 14px; margin-top: 10px;">
+                    {gua_info.get('name', '')} ({gua_info.get('chinese', '')})
+                </div>
+                <div style="font-size: 12px; color: #888;">
+                    {gua_info.get('element', '')} • {gua_info.get('direction', '')}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"**Your Life Star:** Gua {gua_number} - {gua_info.get('name', '')} ({gua_info.get('chinese', '')})")
+            st.markdown(f"**Element:** {gua_info.get('element', '')} | **Direction:** {gua_info.get('direction', '')} | **Group:** {gua_info.get('group', '')} Group")
+            
+            st.info(f"💡 {gua_info.get('description', '')}")
+            
+            with st.expander("📖 What does my Life Star mean?"):
+                st.markdown(f"""
+                Your Life Star (Gua) number is **{gua_number}**, belonging to the **{gua_info.get('group', '')} Group**.
+                
+                **The {gua_info.get('name', '')} Trigram** represents:
+                - **Element:** {gua_info.get('element', '')} - This influences your compatible directions and relationships
+                - **Direction:** {gua_info.get('direction', '')} - Your "home" direction for stability
+                - **Color:** {gua_info.get('color', '')} ({gua_info.get('color_cn', '')}) - Beneficial color for you
+                
+                **East vs West Group:**
+                - **East Group** (1, 3, 4, 9): Best with East, Southeast, North, South directions
+                - **West Group** (2, 6, 7, 8): Best with West, Northwest, Southwest, Northeast directions
+                
+                Your group determines which directions are most supportive for your main door, bedroom, and desk placement.
+                """)
+        
+        # =====================================================================
+        # EIGHT MANSIONS / DIRECTIONS (八宅)
+        # =====================================================================
+        
+        st.markdown("---")
+        st.markdown('<h3 class="section-header">🧭 Eight Mansions 八宅方位</h3>', unsafe_allow_html=True)
+        
+        eight_mansions = result.get('eight_mansions', {})
+        favorable = eight_mansions.get('favorable', [])
+        unfavorable = eight_mansions.get('unfavorable', [])
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("### ✅ Favorable Directions 吉方")
+            for d in favorable:
+                color = "#228B22" if d['rank'] == 1 else "#32CD32" if d['rank'] == 2 else "#90EE90"
+                st.markdown(f"""
+                <div style="padding: 12px; margin: 8px 0; border-radius: 8px; 
+                            background: linear-gradient(90deg, {color}22, transparent);
+                            border-left: 4px solid {color};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: bold; font-size: 16px;">{d['compass']}</span>
+                        <span style="color: {color};">{d['name']} ({d['chinese']})</span>
+                    </div>
+                    <div style="font-size: 12px; color: #888; margin-top: 4px;">
+                        {d['english']} • Rank #{d['rank']}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("### ❌ Unfavorable Directions 凶方")
+            for d in unfavorable:
+                color = "#FF6B6B" if d['rank'] == 8 else "#FF8C8C" if d['rank'] == 7 else "#FFB3B3"
+                st.markdown(f"""
+                <div style="padding: 12px; margin: 8px 0; border-radius: 8px; 
+                            background: linear-gradient(90deg, {color}22, transparent);
+                            border-left: 4px solid {color};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: bold; font-size: 16px;">{d['compass']}</span>
+                        <span style="color: {color};">{d['name']} ({d['chinese']})</span>
+                    </div>
+                    <div style="font-size: 12px; color: #888; margin-top: 4px;">
+                        {d['english']} • Rank #{d['rank']}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        # Detailed direction guidance
+        with st.expander("📖 Direction Meanings & Practical Application"):
+            st.markdown("""
+            ### Favorable Directions - How to Use Them
+            
+            | Direction | Best Use | What It Brings |
+            |-----------|----------|----------------|
+            | **Sheng Qi 生氣** | Main door, Office desk, Important meetings | Wealth, Success, Vitality |
+            | **Tian Yi 天醫** | Bedroom (if sick), Kitchen, Dining | Health, Helpful people, Recovery |
+            | **Yan Nian 延年** | Master bedroom, Living room | Romance, Relationships, Harmony |
+            | **Fu Wei 伏位** | Meditation spot, Study | Stability, Peace, Self-development |
+            
+            ### Unfavorable Directions - What to Avoid
+            
+            | Direction | Avoid For | Potential Problems |
+            |-----------|-----------|-------------------|
+            | **Huo Hai 禍害** | Important work, Negotiations | Arguments, Setbacks |
+            | **Wu Gui 五鬼** | Storing valuables, Fire placement | Theft, Backstabbing, Fire hazards |
+            | **Liu Sha 六煞** | Bedroom, Romance | Scandals, Affairs, Legal issues |
+            | **Jue Ming 絕命** | Everything important! | Serious misfortune, Health problems |
+            
+            ### Practical Tips
+            1. **Main Door**: Should ideally face your Sheng Qi direction
+            2. **Bed Position**: Head pointing towards Tian Yi (health) or Yan Nian (romance)
+            3. **Desk Direction**: Face your Sheng Qi direction while working
+            4. **Stove Position**: Fire should "burn" towards your Tian Yi
+            """)
+        
+        # =====================================================================
+        # FIVE STRUCTURES RADAR (五型格)
+        # =====================================================================
+        
+        st.markdown("---")
+        st.markdown('<h3 class="section-header">⭐ Five Structures 五型格</h3>', unsafe_allow_html=True)
+        
+        five_structures = result.get('five_structures', {})
+        structures = five_structures.get('structures', {})
+        dominant_structure = five_structures.get('dominant', '')
+        dominant_info = five_structures.get('dominant_info', {})
+        
+        # Display dominant structure
+        dominant_element = five_structures.get('dominant_element', 'Earth')
+        dominant_color = ELEMENT_COLORS.get(dominant_element, '#DAA520')
+        
+        st.success(f"**Main Structure:** {dominant_structure} ({dominant_info.get('chinese', '')}) → **{dominant_info.get('english_name', '')}** ({dominant_info.get('structure_name', '')})")
+        
+        # Visual radar/bars
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            st.markdown("**Structure Distribution:**")
+            
+            # Create visual bars for each structure
+            structure_order = ['Wealth', 'Influence', 'Resources', 'Companion', 'Output']
+            for name in structure_order:
+                data = structures.get(name, {})
+                element = data.get('element', 'Earth')
+                color = ELEMENT_COLORS.get(element, '#888')
+                pct = data.get('percentage', 0)
+                score = data.get('score', 0)
+                chinese = data.get('chinese', '')
+                english_name = data.get('info', {}).get('english_name', name)
+                
+                is_dominant = name == dominant_structure
+                border = f"border: 2px solid {color};" if is_dominant else ""
+                
+                st.markdown(f"""
+                <div style="padding: 8px; margin: 6px 0; border-radius: 8px; 
+                            background: #1a1a2e; {border}">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span style="font-weight: {'bold' if is_dominant else 'normal'};">
+                            {element} {chinese} {name}
+                        </span>
+                        <span style="color: {color};">{english_name}</span>
+                    </div>
+                    <div style="background: #333; border-radius: 4px; height: 20px;">
+                        <div style="background: linear-gradient(90deg, {color}, {color}88); 
+                                    width: {pct}%; height: 100%; border-radius: 4px;
+                                    display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;">
+                            <span style="font-size: 11px; color: white;">{pct:.0f}%</span>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("**Element Mapping:**")
+            st.markdown("""
+            | Element | Structure |
+            |---------|-----------|
+            | 木 Wood | 財 Wealth |
+            | 火 Fire | 官 Influence |
+            | 土 Earth | 印 Resources |
+            | 金 Metal | 比 Companion |
+            | 水 Water | 食 Output |
+            """)
+        
+        # Detailed explanation of dominant structure
+        with st.expander(f"📖 About Your Main Structure: {dominant_structure} ({dominant_info.get('english_name', '')})"):
+            if dominant_info:
+                st.markdown(f"### {dominant_info.get('english_name', '')} ({dominant_info.get('structure_name', '')})")
+                st.markdown(f"**Element:** {dominant_info.get('element', '')} | **Chinese:** {dominant_info.get('chinese', '')}")
+                
+                st.info(dominant_info.get('description', ''))
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown("**✅ Strengths:**")
+                    for s in dominant_info.get('strengths', []):
+                        st.markdown(f"- {s}")
+                
+                with col2:
+                    st.markdown("**⚠️ Challenges:**")
+                    for c in dominant_info.get('challenges', []):
+                        st.markdown(f"- {c}")
+                
+                st.markdown("**💼 Suitable Careers:**")
+                careers = dominant_info.get('careers', [])
+                st.markdown(", ".join(careers))
+                
+                st.markdown("**💡 Advice:**")
+                st.success(dominant_info.get('advice', ''))
+        
+        # All structures explanation
+        with st.expander("📖 Understanding All Five Structures"):
+            st.markdown("""
+            The Five Structures map your Ten Gods distribution to the Five Elements, revealing your core tendencies:
+            
+            | Structure | Element | Type | Characteristics |
+            |-----------|---------|------|-----------------|
+            | **Wealth 財** | Wood | Manager 管理型 | Business-minded, resource-focused, practical |
+            | **Influence 官** | Fire | Supporters 忠誠型 | Leadership, authority, discipline |
+            | **Resources 印** | Earth | Thinkers 智慧型 | Analytical, knowledge-seeking, wise |
+            | **Companion 比** | Metal | Connectors 交際型 | Social, networking, team-oriented |
+            | **Output 食** | Water | Creators 創作型 | Creative, expressive, innovative |
+            
+            **How to Read Your Chart:**
+            - Your **highest structure** shows your natural inclination and strengths
+            - A **balanced chart** (all around 50-70%) suggests versatility
+            - Very **low structures** may indicate areas for personal development
+            - Your Day Master element determines how these structures manifest
+            """)
         
         # =====================================================================
         # LUCK PILLARS
