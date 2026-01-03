@@ -655,7 +655,7 @@ def calculate_annual_six_aspects(natal_aspects: Dict, annual_profile_pcts: Dict[
 
 
 # =============================================================================
-# MONTHLY INFLUENCE
+# MONTHLY INFLUENCE - Constants
 # =============================================================================
 
 MONTHLY_STEMS_2026 = {
@@ -675,52 +675,7 @@ MONTHLY_STEMS_2026 = {
     12: ('Xin', 'Chou'),   # Jan 5 (2027) - Ox month
 }
 
-
-def calculate_monthly_influence(year: int, day_master: str) -> List[Dict]:
-    """
-    Calculate monthly pillar influence for a given year.
-    """
-    months = []
-    
-    # Get year stem for calculating month stems
-    year_stem_idx = (year - 4) % 10
-    
-    month_names = ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 
-                   'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan+']
-    
-    for month_num in range(1, 13):
-        # Calculate month stem (Five Tiger formula)
-        # Base: Jia/Ji year starts with Bing Yin
-        base_stem_idx = (year_stem_idx % 5) * 2
-        month_stem_idx = (base_stem_idx + month_num - 1) % 10
-        month_stem = HEAVENLY_STEMS[month_stem_idx]
-        
-        # Month branch is fixed: Yin(Feb), Mao(Mar), etc.
-        month_branch_idx = (month_num + 1) % 12  # Yin=2 for Feb
-        month_branch = EARTHLY_BRANCHES[month_branch_idx]
-        
-        # Get hidden stems
-        hidden = HIDDEN_STEMS.get(month_branch, [])
-        
-        # Calculate ten gods
-        stem_god = get_ten_god(day_master, month_stem)
-        hidden_gods = [{'stem': hs, 'god': get_ten_god(day_master, hs)} for hs in hidden]
-        
-        months.append({
-            'month': month_num,
-            'name': month_names[month_num - 1],
-            'stem': month_stem,
-            'stem_cn': HEAVENLY_STEMS_CN[HEAVENLY_STEMS.index(month_stem)],
-            'branch': month_branch,
-            'branch_cn': EARTHLY_BRANCHES_CN[EARTHLY_BRANCHES.index(month_branch)],
-            'animal': BRANCH_ANIMALS[EARTHLY_BRANCHES.index(month_branch)],
-            'element': STEM_ELEMENTS[month_stem],
-            'stem_god': stem_god,
-            'hidden_stems': hidden,
-            'hidden_gods': hidden_gods
-        })
-    
-    return months
+# NOTE: Main calculate_monthly_influence() function is defined later in file
 
 ELEMENT_COLORS = {
     'Wood': '#228B22',   # Forest Green
@@ -1301,38 +1256,8 @@ def calculate_six_aspects(profile_counts: Dict[str, int], gender: str = 'male') 
 
 
 # =============================================================================
-# ANNUAL ANALYSIS (年度分析)
+# ANNUAL ANALYSIS (年度分析) - Uses calculate_annual_pillar from above
 # =============================================================================
-
-def calculate_annual_pillar(year: int) -> Dict:
-    """
-    Calculate the Annual Pillar for a given year.
-    """
-    # Stem cycle: starts with Jia (0) at year 4 (e.g., 1984, 1994, 2004)
-    stem_idx = (year - 4) % 10
-    stem = HEAVENLY_STEMS[stem_idx]
-    stem_cn = HEAVENLY_STEMS_CN[stem_idx]
-    
-    # Branch cycle: starts with Zi (0) at year 4 (e.g., 1984 = Rat)
-    branch_idx = (year - 4) % 12
-    branch = EARTHLY_BRANCHES[branch_idx]
-    branch_cn = EARTHLY_BRANCHES_CN[branch_idx]
-    animal = BRANCH_ANIMALS[branch_idx]
-    
-    hidden = HIDDEN_STEMS.get(branch, [])
-    
-    return {
-        'year': year,
-        'stem': stem,
-        'stem_cn': stem_cn,
-        'branch': branch,
-        'branch_cn': branch_cn,
-        'animal': animal,
-        'element': STEM_ELEMENTS[stem],
-        'polarity': STEM_POLARITY[stem],
-        'hidden_stems': hidden,
-        'chinese': f"{stem_cn}{branch_cn}"
-    }
 
 
 def calculate_annual_analysis(day_master: str, natal_profiles: Dict[str, int], year: int = 2026) -> Dict:
@@ -2294,47 +2219,8 @@ def calculate_five_structures(profile_counts: Dict[str, int]) -> Dict[str, Dict]
 
 
 # =============================================================================
-# ANNUAL PILLAR CALCULATION
+# ANNUAL PILLAR ANALYSIS (uses calculate_annual_pillar from above)
 # =============================================================================
-
-def calculate_annual_pillar(year: int) -> Dict:
-    """
-    Calculate the Annual Pillar for any given year.
-    
-    The cycle repeats every 60 years (Sexagenary cycle).
-    Reference: 1984 = 甲子 Jia Zi (Wood Rat)
-    
-    2026 = 丙午 Bing Wu (Fire Horse)
-    """
-    # Reference year: 1984 = index 0 (Jia Zi)
-    cycle_index = (year - 1984) % 60
-    
-    stem_index = cycle_index % 10
-    branch_index = cycle_index % 12
-    
-    stem = HEAVENLY_STEMS[stem_index]
-    stem_cn = HEAVENLY_STEMS_CN[stem_index]
-    branch = EARTHLY_BRANCHES[branch_index]
-    branch_cn = EARTHLY_BRANCHES_CN[branch_index]
-    
-    element = STEM_ELEMENTS[stem]
-    polarity = STEM_POLARITY[stem]
-    animal = BRANCH_ANIMALS[branch_index]
-    hidden = HIDDEN_STEMS.get(branch, [])
-    
-    return {
-        'year': year,
-        'stem': stem,
-        'stem_cn': stem_cn,
-        'branch': branch,
-        'branch_cn': branch_cn,
-        'chinese': f"{stem_cn}{branch_cn}",
-        'element': element,
-        'polarity': polarity,
-        'animal': animal,
-        'hidden_stems': hidden,
-        'description': f"{polarity} {element} {animal}"
-    }
 
 
 def analyze_annual_influence(natal_result: Dict, year: int) -> Dict:
