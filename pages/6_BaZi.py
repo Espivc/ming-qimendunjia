@@ -1,5 +1,6 @@
-# pages/6_BaZi.py - Ming QiMenDunJia v10.2 PRO
+# pages/6_BaZi.py - Ming QiMenDunJia v10.5 PRO - FIXED
 # Complete BaZi Analysis with Full Interpretations
+# FIXED: Month pillar now uses solar terms correctly!
 import streamlit as st
 from datetime import datetime, date
 import json
@@ -310,33 +311,83 @@ MONTHLY_STEMS_2025 = {
 }
 
 # =============================================================================
-# CALCULATION FUNCTIONS
+# CALCULATION FUNCTIONS - FIXED with Solar Terms!
 # =============================================================================
 
-def calc_year_pillar(year):
-    idx = (year - 1984) % 60
-    return STEMS[idx % 10], BRANCHES[idx % 12]
+# Solar term dates (Jie terms that START each BaZi month)
+SOLAR_TERMS = {
+    1: (2, 4),    # 立春 → Month 1 (寅 Tiger)
+    2: (3, 6),    # 惊蛰 → Month 2 (卯 Rabbit)
+    3: (4, 5),    # 清明 → Month 3 (辰 Dragon)
+    4: (5, 6),    # 立夏 → Month 4 (巳 Snake)
+    5: (6, 6),    # 芒种 → Month 5 (午 Horse) ← June 27 is HERE!
+    6: (7, 7),    # 小暑 → Month 6 (未 Goat)
+    7: (8, 8),    # 立秋 → Month 7 (申 Monkey)
+    8: (9, 8),    # 白露 → Month 8 (酉 Rooster)
+    9: (10, 8),   # 寒露 → Month 9 (戌 Dog)
+    10: (11, 7),  # 立冬 → Month 10 (亥 Pig)
+    11: (12, 7),  # 大雪 → Month 11 (子 Rat)
+    12: (1, 6),   # 小寒 → Month 12 (丑 Ox)
+}
 
-def calc_month_pillar(year, month):
-    # Simplified - for demo
-    year_stem_idx = (year - 1984) % 10
-    base = (year_stem_idx * 2 + 2) % 10
-    stem_idx = (base + month - 1) % 10
-    branch_idx = (month + 1) % 12
+MONTH_BRANCHES = ["Yin", "Mao", "Chen", "Si", "Wu", "Wei", "Shen", "You", "Xu", "Hai", "Zi", "Chou"]
+
+def calc_year_pillar(year, month=6, day=15):
+    """Calculate year pillar - year changes at Li Chun (Feb 4), not Jan 1!"""
+    li_chun_month, li_chun_day = SOLAR_TERMS[1]
+    if month < li_chun_month or (month == li_chun_month and day < li_chun_day):
+        year = year - 1
+    stem_idx = (year - 4) % 10
+    branch_idx = (year - 4) % 12
     return STEMS[stem_idx], BRANCHES[branch_idx]
 
+def get_bazi_month(year, month, day):
+    """Determine BaZi month (1-12) based on solar terms."""
+    for bazi_month in range(12, 0, -1):
+        solar_month, solar_day = SOLAR_TERMS[bazi_month]
+        if bazi_month == 12:
+            if month == 1 and day >= solar_day:
+                return 12
+            elif month == 12:
+                m11_month, m11_day = SOLAR_TERMS[11]
+                if month > m11_month or (month == m11_month and day >= m11_day):
+                    return 11
+        else:
+            if month > solar_month or (month == solar_month and day >= solar_day):
+                return bazi_month
+    return 12
+
+def calc_month_pillar(year, month, day):
+    """Calculate month pillar using SOLAR TERMS - FIXED!"""
+    bazi_month = get_bazi_month(year, month, day)
+    month_branch = MONTH_BRANCHES[bazi_month - 1]
+    
+    # Get year stem (considering Li Chun boundary)
+    year_stem, _ = calc_year_pillar(year, month, day)
+    year_stem_idx = STEMS.index(year_stem)
+    
+    # Calculate month stem: First month starts at (year_stem * 2 + 2) % 10
+    first_month_stem_idx = (year_stem_idx * 2 + 2) % 10
+    month_stem_idx = (first_month_stem_idx + bazi_month - 1) % 10
+    month_stem = STEMS[month_stem_idx]
+    
+    return month_stem, month_branch
+
 def calc_day_pillar(dt):
+    """Calculate day pillar."""
     ref = date(1900, 1, 1)
     days = (dt - ref).days
     return STEMS[days % 10], BRANCHES[(days + 10) % 12]
 
 def calc_hour_pillar(hour, day_stem):
+    """Calculate hour pillar."""
     branch_idx = 0 if hour == 23 else ((hour + 1) // 2) % 12
     day_idx = STEMS.index(day_stem)
-    stem_idx = (day_idx * 2 + branch_idx) % 10
+    stem_idx = ((day_idx % 5) * 2 + branch_idx) % 10
     return STEMS[stem_idx], BRANCHES[branch_idx]
 
 def get_10_god(dm, stem):
+    """Calculate 10 God relationship."""
     dm_elem, dm_pol = STEM_ELEM[dm], STEM_POL[dm]
     s_elem, s_pol = STEM_ELEM[stem], STEM_POL[stem]
     same_pol = dm_pol == s_pol
@@ -359,13 +410,13 @@ def get_10_god(dm, stem):
     return "?"
 
 def calc_dm_strength(pillars, dm):
+    """Calculate Day Master strength."""
     dm_elem = STEM_ELEM[dm]
     support, oppose = 0, 0
     
     produces = {"Wood":"Fire","Fire":"Earth","Earth":"Metal","Metal":"Water","Water":"Wood"}
     controls = {"Wood":"Earth","Earth":"Water","Water":"Fire","Fire":"Metal","Metal":"Wood"}
     
-    # Check all elements in chart
     for p in pillars:
         s_elem = STEM_ELEM[p["stem"]]
         b_elem = BRANCH_ELEM[p["branch"]]
@@ -392,6 +443,7 @@ def calc_dm_strength(pillars, dm):
     return round(pct, 1), cat
 
 def get_useful_gods(strength_cat, dm_elem):
+    """Determine useful and unfavorable elements."""
     produces = {"Wood":"Fire","Fire":"Earth","Earth":"Metal","Metal":"Water","Water":"Wood"}
     produced_by = {v:k for k,v in produces.items()}
     controls = {"Wood":"Earth","Earth":"Water","Water":"Fire","Fire":"Metal","Metal":"Wood"}
@@ -415,7 +467,7 @@ def get_useful_gods(strength_cat, dm_elem):
 
 def main():
     st.title("🎴 BaZi Pro Analysis")
-    st.caption("Complete Four Pillars Analysis with Full Interpretations")
+    st.caption("Complete Four Pillars Analysis with Full Interpretations • v10.5 FIXED")
     
     # Sidebar
     with st.sidebar:
@@ -439,9 +491,9 @@ def main():
     # Main content
     if calc_btn or st.session_state.get("bazi_calc"):
         if calc_btn:
-            # Calculate pillars
-            y_stem, y_branch = calc_year_pillar(birth_date.year)
-            m_stem, m_branch = calc_month_pillar(birth_date.year, birth_date.month)
+            # Calculate pillars - NOW USING FIXED FUNCTIONS!
+            y_stem, y_branch = calc_year_pillar(birth_date.year, birth_date.month, birth_date.day)
+            m_stem, m_branch = calc_month_pillar(birth_date.year, birth_date.month, birth_date.day)
             d_stem, d_branch = calc_day_pillar(birth_date)
             h_stem, h_branch = calc_hour_pillar(birth_hour, d_stem)
             
