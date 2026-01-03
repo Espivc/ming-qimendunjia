@@ -5,8 +5,10 @@ Ming QiMenDunJia - Core Calculation Module
 
 This module contains the core calculation engines for:
 - BaZi (Four Pillars of Destiny)
+- Life Star / Gua (風水命卦)
+- Eight Mansions (八宅)
+- Five Structures (五型格)
 - QMDJ (Qi Men Dun Jia) - Coming soon
-- Formations - Coming soon
 
 Usage:
     from core.bazi_calculator import analyze_bazi, calculate_four_pillars
@@ -39,14 +41,24 @@ from .bazi_calculator import (
     calculate_luck_pillar_start_age,
     get_luck_direction,
     
-    # Symbolic Stars (NEW!)
+    # Symbolic Stars
     calculate_symbolic_stars,
     calculate_life_palace,
     calculate_conception_palace,
     
-    # Life Stages (NEW!)
+    # Life Stages
     get_life_stage,
     calculate_life_stages_for_chart,
+    
+    # Life Star / Gua (NEW!)
+    calculate_gua_number,
+    get_gua_info,
+    
+    # Eight Mansions (NEW!)
+    calculate_eight_mansions,
+    
+    # Five Structures (NEW!)
+    calculate_five_structures,
     
     # Interactions
     detect_clashes,
@@ -95,9 +107,15 @@ from .bazi_calculator import (
     SKY_HORSE,
     SOLITARY_STAR,
     TWELVE_STAGES,
+    # Life Star / Gua constants (NEW!)
+    GUA_INFO,
+    DIRECTION_MEANINGS,
+    EIGHT_MANSIONS,
+    # Five Structures constants (NEW!)
+    FIVE_STRUCTURES_INFO,
 )
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __all__ = [
     'analyze_bazi',
     'calculate_four_pillars',
@@ -107,7 +125,13 @@ __all__ = [
     'calculate_luck_pillars',
     'calculate_symbolic_stars',
     'calculate_life_stages_for_chart',
+    'calculate_gua_number',
+    'calculate_eight_mansions',
+    'calculate_five_structures',
     'Pillar',
     'LuckPillar',
     'DMStrength',
+    'GUA_INFO',
+    'DIRECTION_MEANINGS',
+    'FIVE_STRUCTURES_INFO',
 ]
