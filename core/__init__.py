@@ -50,6 +50,11 @@ from .bazi_calculator import (
     get_life_stage,
     calculate_life_stages_for_chart,
     
+    # Hidden Stems Analysis (NEW!)
+    explain_hidden_stems,
+    get_ten_god_meaning,
+    get_pillar_hidden_stem_analysis,
+    
     # Life Star / Gua (NEW!)
     calculate_gua_number,
     get_gua_info,
@@ -113,9 +118,11 @@ from .bazi_calculator import (
     EIGHT_MANSIONS,
     # Five Structures constants (NEW!)
     FIVE_STRUCTURES_INFO,
+    # Hidden Stems constants (NEW!)
+    HIDDEN_STEM_ROLES,
 )
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 __all__ = [
     'analyze_bazi',
     'calculate_four_pillars',
