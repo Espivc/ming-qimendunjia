@@ -1269,17 +1269,53 @@ MONTH_STEM_START = {
 
 MONTH_BRANCHES = ['Yin', 'Mao', 'Chen', 'Si', 'Wu', 'Wei', 'Shen', 'You', 'Xu', 'Hai', 'Zi', 'Chou']
 
-def calculate_monthly_influence(day_master: str = 'Jia', year: int = 2026) -> List[Dict]:
+def calculate_monthly_influence(arg1 = None, arg2 = None, day_master: str = None, year: int = None) -> List[Dict]:
     """
     Calculate monthly pillars and their influence for a given year.
-    """
-    # DEFENSIVE: Ensure year is an integer and day_master is valid
-    if year is None:
-        year = 2026
-    year = int(year)
     
-    if day_master is None or day_master not in HEAVENLY_STEMS:
-        day_master = 'Jia'
+    Accepts arguments in ANY order:
+    - calculate_monthly_influence(day_master, year)
+    - calculate_monthly_influence(year, day_master)
+    - calculate_monthly_influence(day_master=..., year=...)
+    """
+    # SMART ARGUMENT DETECTION
+    # Determine which argument is which based on type/content
+    
+    detected_year = None
+    detected_dm = None
+    
+    # Check arg1
+    if arg1 is not None:
+        if isinstance(arg1, int) or (isinstance(arg1, str) and arg1.isdigit()):
+            detected_year = int(arg1)
+        elif isinstance(arg1, str) and arg1 in HEAVENLY_STEMS:
+            detected_dm = arg1
+    
+    # Check arg2
+    if arg2 is not None:
+        if isinstance(arg2, int) or (isinstance(arg2, str) and arg2.isdigit()):
+            detected_year = int(arg2)
+        elif isinstance(arg2, str) and arg2 in HEAVENLY_STEMS:
+            detected_dm = arg2
+    
+    # Check named parameters
+    if year is not None:
+        detected_year = int(year)
+    if day_master is not None:
+        detected_dm = day_master
+    
+    # Apply defaults if still None
+    if detected_year is None:
+        detected_year = 2026
+    if detected_dm is None:
+        detected_dm = 'Jia'
+    
+    # Validate
+    if detected_dm not in HEAVENLY_STEMS:
+        detected_dm = 'Jia'
+    
+    year = detected_year
+    day_master = detected_dm
     
     # Get year stem to determine month stem cycle
     annual_pillar = calculate_annual_pillar(year)
