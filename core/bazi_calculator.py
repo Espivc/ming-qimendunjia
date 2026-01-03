@@ -560,37 +560,37 @@ SIX_ASPECTS_INFO = {
     'Life Purpose': {
         'chinese': '事業',
         'description': 'Career direction, life mission, sense of purpose',
-        'gods': ['Direct Officer', 'Seven Killings'],
+        'ten_gods': ['Direct Officer', 'Seven Killings'],
         'element': 'Fire'
     },
     'Financial': {
         'chinese': '財運',
         'description': 'Wealth potential, money management, financial opportunities',
-        'gods': ['Direct Wealth', 'Indirect Wealth'],
+        'ten_gods': ['Direct Wealth', 'Indirect Wealth'],
         'element': 'Wood'
     },
     'Relationship': {
         'chinese': '感情',
         'description': 'Romance, partnerships, social connections',
-        'gods': ['Rob Wealth', 'Friend'],
+        'ten_gods': ['Rob Wealth', 'Friend'],
         'element': 'Metal'
     },
     'Family': {
         'chinese': '家庭',
         'description': 'Family harmony, home life, parental relationships',
-        'gods': ['Direct Resource', 'Indirect Resource'],
+        'ten_gods': ['Direct Resource', 'Indirect Resource'],
         'element': 'Earth'
     },
     'Wellness': {
         'chinese': '健康',
         'description': 'Physical health, mental wellbeing, vitality',
-        'gods': ['Eating God'],
+        'ten_gods': ['Eating God'],
         'element': 'Water'
     },
     'Contribution': {
         'chinese': '貢獻',
         'description': 'Creative output, legacy, impact on others',
-        'gods': ['Hurting Officer', 'Eating God'],
+        'ten_gods': ['Hurting Officer', 'Eating God'],
         'element': 'Water'
     }
 }
@@ -611,7 +611,7 @@ def calculate_six_aspects(profile_percentages: Dict[str, float]) -> Dict[str, Di
     aspects = {}
     
     for aspect_name, info in SIX_ASPECTS_INFO.items():
-        gods = info['gods']
+        gods = info.get('ten_gods', info.get('gods', []))
         
         # Calculate score as average of related gods' percentages
         total = sum(profile_percentages.get(god, 0) for god in gods)
@@ -635,7 +635,7 @@ def calculate_annual_six_aspects(natal_aspects: Dict, annual_profile_pcts: Dict[
     annual_aspects = {}
     
     for aspect_name, info in SIX_ASPECTS_INFO.items():
-        gods = info['gods']
+        gods = info.get('ten_gods', info.get('gods', []))
         
         total = sum(annual_profile_pcts.get(god, 0) for god in gods)
         score = total / len(gods) if gods else 0
