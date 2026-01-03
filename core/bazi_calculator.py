@@ -1350,6 +1350,7 @@ def calculate_monthly_influence(arg1 = None, arg2 = None, day_master: str = None
         months.append({
             'month_num': i + 1,
             'month_name': month_names[i],
+            'name': month_names[i],  # Alias for compatibility with 6_BaZi.py
             'year': year if i < 11 else year + 1,  # Jan is next year
             'stem': stem,
             'stem_cn': stem_cn,
