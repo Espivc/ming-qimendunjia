@@ -26,11 +26,15 @@ try:
         calculate_dm_strength,
         calculate_ten_profiles,
         calculate_luck_pillars,
+        calculate_profile_percentages_joey_yap,
+        calculate_symbolic_stars,
+        calculate_life_stages_for_chart,
         determine_useful_gods,
         detect_clashes,
         detect_combines,
         detect_three_harmony,
         get_dominant_profile,
+        get_dominant_profile_joey_yap,
         get_luck_direction,
         pillars_to_dict,
         analyze_bazi,
@@ -252,30 +256,28 @@ def main():
         dominant = profiles['dominant']
         profile_name = profiles['profile_name']
         
-        st.success(f"**Dominant Profile:** {dominant} ({TEN_GODS_CN.get(dominant, '')}) → **{profile_name}**")
+        st.success(f"**Main Profile:** {dominant} ({TEN_GODS_CN.get(dominant, '')}) → **{profile_name}**")
         
-        # Sort profiles by count
-        sorted_profiles = sorted(profiles['counts'].items(), key=lambda x: -x[1])
+        # Sort profiles by percentage (Joey Yap method)
+        sorted_profiles = sorted(profiles['percentages'].items(), key=lambda x: -x[1])
         
         # Create bar chart data
         col1, col2 = st.columns([2, 1])
         
         with col1:
             # Visual bars
-            max_count = max(profiles['counts'].values()) if profiles['counts'] else 1
-            
-            for god, count in sorted_profiles:
-                if count > 0:
-                    pct = (count / max_count) * 100
+            for god, pct in sorted_profiles:
+                if pct > 0:
                     cn_name = TEN_GODS_CN.get(god, '')
+                    count = profiles['counts'].get(god, 0)
                     st.markdown(f"""
                     <div style="margin: 5px 0;">
                         <div style="display: flex; align-items: center;">
-                            <span style="width: 150px; font-size: 12px;">{god} {cn_name}</span>
+                            <span style="width: 180px; font-size: 12px;">{god} {cn_name}</span>
                             <div style="flex: 1; background: #333; border-radius: 3px; height: 20px; margin: 0 10px;">
                                 <div style="background: #DAA520; width: {pct}%; height: 100%; border-radius: 3px;"></div>
                             </div>
-                            <span style="width: 30px; text-align: right;">{count}</span>
+                            <span style="width: 50px; text-align: right;">{pct:.0f}%</span>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
@@ -284,9 +286,52 @@ def main():
             st.markdown("**Profile Meanings:**")
             st.markdown(f"""
             - 👔 **{profile_name}**
-            - Based on {dominant} dominance
+            - Based on {dominant}
             - {TEN_GODS_CN.get(dominant, '')}
             """)
+        
+        # =====================================================================
+        # SYMBOLIC STARS (NEW!)
+        # =====================================================================
+        
+        st.markdown("---")
+        st.markdown('<h3 class="section-header">⭐ Symbolic Stars 神煞</h3>', unsafe_allow_html=True)
+        
+        stars = result.get('symbolic_stars', {})
+        celestial = result.get('celestial_animal', {})
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("**Identity 身份**")
+            st.markdown(f"- 生肖 Celestial Animal: **{celestial.get('animal', 'N/A')}** ({celestial.get('branch', '')})")
+            if stars.get('noble_people'):
+                np = stars['noble_people']
+                st.markdown(f"- 贵人 Noble People: **{', '.join(np['animals'])}**")
+            if stars.get('life_palace'):
+                lp = stars['life_palace']
+                st.markdown(f"- 命宫 Life Palace: **{lp.get('full', '')}** ({lp.get('animal', '')})")
+        
+        with col2:
+            st.markdown("**Talents 才能**")
+            if stars.get('intelligence'):
+                intel = stars['intelligence']
+                st.markdown(f"- 文昌 Intelligence: **{intel['animal']}** ({intel['branch']})")
+            if stars.get('peach_blossom'):
+                pb = stars['peach_blossom']
+                st.markdown(f"- 桃花 Peach Blossom: **{pb['animal']}** ({pb['branch']})")
+            if stars.get('conception_palace'):
+                cp = stars['conception_palace']
+                st.markdown(f"- 胎元 Conception: **{cp.get('full', '')}** ({cp.get('animal', '')})")
+        
+        with col3:
+            st.markdown("**Movement 动态**")
+            if stars.get('sky_horse'):
+                sh = stars['sky_horse']
+                st.markdown(f"- 驿马 Sky Horse: **{sh['animal']}** ({sh['branch']})")
+            if stars.get('solitary'):
+                sol = stars['solitary']
+                st.markdown(f"- 孤辰 Solitary: **{sol['animal']}** ({sol['branch']})")
         
         # =====================================================================
         # LUCK PILLARS
