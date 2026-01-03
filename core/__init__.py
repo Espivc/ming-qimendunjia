@@ -55,6 +55,22 @@ from .bazi_calculator import (
     get_ten_god_meaning,
     get_pillar_hidden_stem_analysis,
     
+    # 12 Life Stages (NEW!)
+    get_twelve_stages_wheel,
+    
+    # 6 Aspects (NEW!)
+    calculate_six_aspects,
+    
+    # Annual Analysis (NEW!)
+    calculate_annual_pillar,
+    calculate_annual_analysis,
+    
+    # Monthly Influence (NEW!)
+    calculate_monthly_influence,
+    
+    # Current Luck Pillar (NEW!)
+    get_current_luck_pillar,
+    
     # Life Star / Gua (NEW!)
     calculate_gua_number,
     get_gua_info,
@@ -120,6 +136,10 @@ from .bazi_calculator import (
     FIVE_STRUCTURES_INFO,
     # Hidden Stems constants (NEW!)
     HIDDEN_STEM_ROLES,
+    # 12 Life Stages constants (NEW!)
+    TWELVE_STAGES_INFO,
+    # 6 Aspects constants (NEW!)
+    SIX_ASPECTS_INFO,
 )
 
 __version__ = "1.3.0"
