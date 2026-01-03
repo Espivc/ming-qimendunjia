@@ -30,12 +30,23 @@ from .bazi_calculator import (
     # Ten Gods / Profiles
     get_ten_god,
     calculate_ten_profiles,
+    calculate_profile_percentages_joey_yap,
     get_dominant_profile,
+    get_dominant_profile_joey_yap,
     
     # Luck Pillars
     calculate_luck_pillars,
     calculate_luck_pillar_start_age,
     get_luck_direction,
+    
+    # Symbolic Stars (NEW!)
+    calculate_symbolic_stars,
+    calculate_life_palace,
+    calculate_conception_palace,
+    
+    # Life Stages (NEW!)
+    get_life_stage,
+    calculate_life_stages_for_chart,
     
     # Interactions
     detect_clashes,
@@ -77,15 +88,25 @@ from .bazi_calculator import (
     SIX_COMBINES,
     THREE_HARMONY,
     SEASONAL_STRENGTH,
+    # Symbolic Stars constants
+    NOBLE_PEOPLE,
+    PEACH_BLOSSOM,
+    INTELLIGENCE_STAR,
+    SKY_HORSE,
+    SOLITARY_STAR,
+    TWELVE_STAGES,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __all__ = [
     'analyze_bazi',
     'calculate_four_pillars',
     'calculate_dm_strength',
     'calculate_ten_profiles',
+    'calculate_profile_percentages_joey_yap',
     'calculate_luck_pillars',
+    'calculate_symbolic_stars',
+    'calculate_life_stages_for_chart',
     'Pillar',
     'LuckPillar',
     'DMStrength',
