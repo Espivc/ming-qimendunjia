@@ -954,6 +954,224 @@ def main():
             """)
         
         # =====================================================================
+        # 12 LIFE STAGES WHEEL (十二长生)
+        # =====================================================================
+        
+        st.markdown("---")
+        st.markdown('<h3 class="section-header">🔄 12 Life Stages 十二长生</h3>', unsafe_allow_html=True)
+        
+        twelve_stages = result.get('twelve_stages_wheel', [])
+        
+        if twelve_stages:
+            # Display as 3 rows of 4
+            for row in range(3):
+                cols = st.columns(4)
+                for col_idx in range(4):
+                    stage_idx = row * 4 + col_idx
+                    if stage_idx < len(twelve_stages):
+                        stage = twelve_stages[stage_idx]
+                        quality_color = '#228B22' if stage['quality'] == 'Favorable' else '#FF6B6B' if stage['quality'] == 'Unfavorable' else '#888'
+                        
+                        with cols[col_idx]:
+                            st.markdown(f"""
+                            <div style="text-align: center; padding: 10px; margin: 5px 0; border-radius: 8px;
+                                        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                                        border: 1px solid {quality_color};">
+                                <div style="font-size: 16px; font-weight: bold;">{stage['stage_cn']}</div>
+                                <div style="font-size: 11px; color: #888;">{stage['stage_english']}</div>
+                                <div style="font-size: 14px; margin-top: 5px; color: {quality_color};">
+                                    {stage['animal']} ({stage['branch_cn']})
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+            
+            with st.expander("📖 Understanding 12 Life Stages"):
+                st.markdown("""
+                The **12 Life Stages** (十二长生) represent the cycle of energy for your Day Master element.
+                Each branch position shows what stage of the energy cycle you're in.
+                
+                | Stage | Chinese | Quality | Meaning |
+                |-------|---------|---------|---------|
+                | Birth | 長生 | ✅ Favorable | New beginnings, fresh energy |
+                | Bath | 沐浴 | ❌ Unfavorable | Vulnerable, exposed, romantic |
+                | Youth | 冠帶 | ✅ Favorable | Coming of age, preparation |
+                | Maturity | 臨官 | ✅ Favorable | Career peak, official position |
+                | Prosperous | 帝旺 | ✅ Favorable | Maximum power, emperor stage |
+                | Weakening | 衰 | ❌ Unfavorable | Decline begins, caution |
+                | Sickness | 病 | ❌ Unfavorable | Need rest and recovery |
+                | Death | 死 | ❌ Unfavorable | Transformation, letting go |
+                | Grave | 墓 | ⚪ Neutral | Storage, hidden resources |
+                | Extinction | 絕 | ❌ Unfavorable | Complete end, void |
+                | Conceived | 胎 | ⚪ Neutral | Potential forming |
+                | Nourishing | 養 | ✅ Favorable | Preparation for birth |
+                
+                **Your Day Branch** shows your personal Life Stage - this is especially important!
+                """)
+        
+        # =====================================================================
+        # 6 ASPECTS CHART (六项分析)
+        # =====================================================================
+        
+        st.markdown("---")
+        st.markdown('<h3 class="section-header">📊 6 Aspects 六项分析</h3>', unsafe_allow_html=True)
+        
+        six_aspects = result.get('six_aspects', {})
+        
+        if six_aspects:
+            col1, col2 = st.columns(2)
+            aspect_items = list(six_aspects.items())
+            
+            with col1:
+                for key, data in aspect_items[:3]:
+                    strength_color = '#228B22' if data['strength'] == 'Strong' else '#DAA520' if data['strength'] == 'Moderate' else '#888'
+                    st.markdown(f"""
+                    <div style="padding: 12px; margin: 8px 0; border-radius: 8px;
+                                background: linear-gradient(90deg, {strength_color}22, transparent);
+                                border-left: 4px solid {strength_color};">
+                        <div style="font-weight: bold;">{data['name']} ({data['chinese']})</div>
+                        <div style="background: #333; border-radius: 4px; height: 16px; margin: 8px 0;">
+                            <div style="background: {strength_color}; width: {data['percentage']}%; height: 100%; border-radius: 4px;"></div>
+                        </div>
+                        <div style="font-size: 11px; color: #888;">{data['description']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            with col2:
+                for key, data in aspect_items[3:]:
+                    strength_color = '#228B22' if data['strength'] == 'Strong' else '#DAA520' if data['strength'] == 'Moderate' else '#888'
+                    st.markdown(f"""
+                    <div style="padding: 12px; margin: 8px 0; border-radius: 8px;
+                                background: linear-gradient(90deg, {strength_color}22, transparent);
+                                border-left: 4px solid {strength_color};">
+                        <div style="font-weight: bold;">{data['name']} ({data['chinese']})</div>
+                        <div style="background: #333; border-radius: 4px; height: 16px; margin: 8px 0;">
+                            <div style="background: {strength_color}; width: {data['percentage']}%; height: 100%; border-radius: 4px;"></div>
+                        </div>
+                        <div style="font-size: 11px; color: #888;">{data['description']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            with st.expander("📖 Understanding 6 Aspects"):
+                st.markdown("""
+                The **6 Aspects** show how your Ten Gods distribution affects different life areas:
+                
+                - **Life Purpose**: Your mission and what drives you (Direct Officer, Seven Killings)
+                - **Wealth & Finance**: Money and assets (Direct/Indirect Wealth)
+                - **Relationships**: Marriage and partnerships
+                - **Health**: Physical and mental wellbeing (Friend, Rob Wealth)
+                - **Career**: Professional advancement (Officer stars)
+                - **Creativity**: Self-expression and children (Eating God, Hurting Officer)
+                
+                **Strong** (60%+) = Natural strength in this area
+                **Moderate** (30-60%) = Balanced, can develop
+                **Weak** (<30%) = May need extra effort
+                """)
+        
+        # =====================================================================
+        # ANNUAL ANALYSIS 2026 (年度分析)
+        # =====================================================================
+        
+        st.markdown("---")
+        st.markdown('<h3 class="section-header">📅 Annual Analysis 2026 年度分析</h3>', unsafe_allow_html=True)
+        
+        annual = result.get('annual_analysis', {})
+        
+        if annual:
+            pillar = annual.get('pillar', {})
+            
+            col1, col2 = st.columns([1, 2])
+            
+            with col1:
+                # Annual Pillar Card
+                element_color = ELEMENT_COLORS.get(pillar.get('element', 'Fire'), '#DC143C')
+                st.markdown(f"""
+                <div style="text-align: center; padding: 20px; border-radius: 15px;
+                            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                            border: 3px solid {element_color};">
+                    <div style="font-size: 12px; color: #888;">2026 Annual Pillar</div>
+                    <div style="font-size: 36px; font-weight: bold; color: {element_color};">
+                        {pillar.get('chinese', '')}
+                    </div>
+                    <div style="font-size: 16px; margin-top: 5px;">
+                        {pillar.get('animal', '')} 🐴
+                    </div>
+                    <div style="font-size: 12px; color: #888;">
+                        {pillar.get('polarity', '')} {pillar.get('element', '')}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown(f"**2026 Theme:** {annual.get('theme_name', '')} ({annual.get('theme', '')})")
+                st.markdown(f"**Annual Stem God:** {annual.get('stem_god', '')} ({TEN_GODS_CN.get(annual.get('stem_god', ''), '')})")
+                
+                # Hidden Gods
+                hidden_gods = annual.get('hidden_gods', [])
+                if hidden_gods:
+                    st.markdown(f"**Hidden Influences:** {', '.join(hidden_gods)}")
+                
+                # Check if favorable
+                dm_element = result['day_master']['element']
+                useful = result['useful_gods']['useful']
+                annual_element = pillar.get('element', '')
+                
+                if annual_element in useful:
+                    st.success(f"✅ 2026 ({annual_element}) is FAVORABLE for you! Supports your {dm_element} Day Master.")
+                else:
+                    st.warning(f"⚠️ 2026 ({annual_element}) requires caution. May challenge your {dm_element} Day Master.")
+            
+            # Natal vs Annual Profile Comparison
+            with st.expander("📊 Natal vs 2026 Profile Comparison"):
+                profiles = annual.get('profiles', {})
+                st.markdown("**How 2026 shifts your profile emphasis:**")
+                
+                for god, data in profiles.items():
+                    if data['annual'] > 0 or data['natal'] > 0:
+                        change = "📈" if data['annual'] > 0 else "➡️"
+                        st.markdown(f"- **{god}**: Natal {data['natal']} + Annual {data['annual']} = {data['combined']} {change}")
+        
+        # =====================================================================
+        # MONTHLY INFLUENCE 2026 (月度分析)
+        # =====================================================================
+        
+        st.markdown("---")
+        st.markdown('<h3 class="section-header">📆 Monthly Influence 2026 月度分析</h3>', unsafe_allow_html=True)
+        
+        monthly = result.get('monthly_influence', [])
+        
+        if monthly:
+            # Display as 3 rows of 4 months
+            for row in range(3):
+                cols = st.columns(4)
+                for col_idx in range(4):
+                    month_idx = row * 4 + col_idx
+                    if month_idx < len(monthly):
+                        month = monthly[month_idx]
+                        element_color = ELEMENT_COLORS.get(month['element'], '#888')
+                        
+                        with cols[col_idx]:
+                            st.markdown(f"""
+                            <div style="text-align: center; padding: 10px; margin: 5px 0; border-radius: 8px;
+                                        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                                        border: 1px solid {element_color};">
+                                <div style="font-size: 11px; color: #888;">{month['month_name']} {month['year']}</div>
+                                <div style="font-size: 18px; font-weight: bold; color: {element_color};">
+                                    {month['chinese']}
+                                </div>
+                                <div style="font-size: 11px;">{month['animal']}</div>
+                                <div style="font-size: 10px; color: {element_color}; margin-top: 3px;">
+                                    {month['stem_god_cn']}
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+            
+            with st.expander("📖 Monthly Ten Gods Breakdown"):
+                st.markdown("**Each month brings different energy to your chart:**")
+                for month in monthly:
+                    hidden_text = ", ".join([f"{hs[0]} ({hs[1]})" for hs in month['hidden_stems']])
+                    st.markdown(f"- **{month['month_name']}** {month['chinese']}: {month['stem_god']} ({month['stem_god_cn']}) | Hidden: {hidden_text}")
+        
+        # =====================================================================
         # LUCK PILLARS
         # =====================================================================
         
@@ -961,23 +1179,33 @@ def main():
         st.markdown('<h3 class="section-header">🔄 Luck Pillars (10-Year Cycles)</h3>', unsafe_allow_html=True)
         
         lp_data = result['luck_pillars']
+        current_luck = result.get('current_luck', {})
+        current_idx = current_luck.get('pillar_index', -1)
         
-        st.caption(f"**Direction:** {lp_data['direction']} | **Start Age:** {lp_data['start_age']}")
+        st.caption(f"**Direction:** {lp_data['direction']} | **Start Age:** {lp_data['start_age']} | **Current Age:** {current_luck.get('current_age', 'N/A')}")
         
         # Display luck pillars
         lp_cols = st.columns(len(lp_data['pillars']))
         
         for i, lp in enumerate(lp_data['pillars']):
             color = ELEMENT_COLORS.get(lp['element'], '#888')
+            is_current = (i == current_idx)
+            border_width = "3px" if is_current else "1px"
+            glow = f"box-shadow: 0 0 15px {color};" if is_current else ""
             
             with lp_cols[i]:
+                current_badge = "<div style='font-size: 10px; color: #FFD700;'>⭐ NOW</div>" if is_current else ""
                 st.markdown(f"""
-                <div class="luck-pillar" style="border: 1px solid {color};">
+                <div class="luck-pillar" style="border: {border_width} solid {color}; {glow}">
+                    {current_badge}
                     <div style="font-weight: bold; color: {color};">{lp['age_range']}</div>
                     <div style="font-size: 18px; margin: 5px 0;">{lp['chinese']}</div>
                     <div style="font-size: 10px;">{lp['animal']}</div>
                 </div>
                 """, unsafe_allow_html=True)
+        
+        if current_luck.get('pillar'):
+            st.info(f"📍 You are currently in **{current_luck['pillar']['chinese']}** luck pillar ({current_luck['pillar']['animal']}). **{current_luck.get('years_remaining', 0)} years** remaining in this cycle.")
         
         # =====================================================================
         # INTERACTIONS (Clashes & Combines)
