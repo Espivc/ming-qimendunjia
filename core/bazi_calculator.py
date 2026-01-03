@@ -553,80 +553,11 @@ def calculate_annual_profile_influence(natal_profiles: Dict[str, int], annual_pi
 
 
 # =============================================================================
-# SIX ASPECTS ANALYSIS (六神)
+# SIX ASPECTS ANALYSIS (六神) - Main definition is later in file
 # =============================================================================
 
-SIX_ASPECTS_INFO = {
-    'Life Purpose': {
-        'chinese': '事業',
-        'description': 'Career direction, life mission, sense of purpose',
-        'ten_gods': ['Direct Officer', 'Seven Killings'],
-        'element': 'Fire'
-    },
-    'Financial': {
-        'chinese': '財運',
-        'description': 'Wealth potential, money management, financial opportunities',
-        'ten_gods': ['Direct Wealth', 'Indirect Wealth'],
-        'element': 'Wood'
-    },
-    'Relationship': {
-        'chinese': '感情',
-        'description': 'Romance, partnerships, social connections',
-        'ten_gods': ['Rob Wealth', 'Friend'],
-        'element': 'Metal'
-    },
-    'Family': {
-        'chinese': '家庭',
-        'description': 'Family harmony, home life, parental relationships',
-        'ten_gods': ['Direct Resource', 'Indirect Resource'],
-        'element': 'Earth'
-    },
-    'Wellness': {
-        'chinese': '健康',
-        'description': 'Physical health, mental wellbeing, vitality',
-        'ten_gods': ['Eating God'],
-        'element': 'Water'
-    },
-    'Contribution': {
-        'chinese': '貢獻',
-        'description': 'Creative output, legacy, impact on others',
-        'ten_gods': ['Hurting Officer', 'Eating God'],
-        'element': 'Water'
-    }
-}
-
-
-def calculate_six_aspects(profile_percentages: Dict[str, float]) -> Dict[str, Dict]:
-    """
-    Calculate Six Aspects scores from Ten Profiles.
-    
-    Each aspect is derived from specific Ten Gods:
-    - Life Purpose: Direct Officer + Seven Killings (Influence/官)
-    - Financial: Direct Wealth + Indirect Wealth (Wealth/財)
-    - Relationship: Rob Wealth + Friend (Companion/比)
-    - Family: Direct Resource + Indirect Resource (Resource/印)
-    - Wellness: Eating God (Output/食)
-    - Contribution: Hurting Officer + Eating God (Output/食)
-    """
-    aspects = {}
-    
-    for aspect_name, info in SIX_ASPECTS_INFO.items():
-        gods = info.get('ten_gods', info.get('gods', []))
-        
-        # Calculate score as average of related gods' percentages
-        total = sum(profile_percentages.get(god, 0) for god in gods)
-        score = total / len(gods) if gods else 0
-        
-        aspects[aspect_name] = {
-            'score': round(score, 0),
-            'chinese': info['chinese'],
-            'description': info['description'],
-            'element': info['element'],
-            'related_gods': gods
-        }
-    
-    return aspects
-
+# NOTE: SIX_ASPECTS_INFO and calculate_six_aspects are defined later in the file
+# to avoid duplication
 
 def calculate_annual_six_aspects(natal_aspects: Dict, annual_profile_pcts: Dict[str, float]) -> Dict[str, Dict]:
     """
