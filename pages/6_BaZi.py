@@ -2,7 +2,7 @@
 ===============================================================================
 6_BaZi.py - Ming QiMenDunJia BaZi Pro Analysis Page
 ===============================================================================
-Version: 10.6 (Modular Architecture)
+Version: 10.7 (Joey Yap Aligned)
 Updated: 2026-01-03
 
 This page imports calculations from core/bazi_calculator.py
@@ -110,7 +110,7 @@ st.markdown("""
 
 def main():
     st.title("🎋 BaZi Pro Analysis")
-    st.caption("Four Pillars of Destiny • v10.6")
+    st.caption("Four Pillars of Destiny • v10.7")
     
     # Check import
     if not IMPORT_SUCCESS:
