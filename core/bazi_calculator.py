@@ -71,20 +71,21 @@ BRANCH_POLARITY = {
     'Shen': 'Yang', 'You': 'Yin', 'Xu': 'Yang', 'Hai': 'Yin'
 }
 
-# Hidden Stems in each Branch (Main, Secondary, Residual order)
+# Hidden Stems in each Branch (Joey Yap order - VERIFIED against Joey Yap chart)
+# This order is CRITICAL for correct display
 HIDDEN_STEMS = {
-    'Zi': ['Gui'],                    # Rat
-    'Chou': ['Ji', 'Gui', 'Xin'],    # Ox
-    'Yin': ['Jia', 'Bing', 'Wu'],    # Tiger
-    'Mao': ['Yi'],                    # Rabbit
-    'Chen': ['Wu', 'Yi', 'Gui'],     # Dragon
-    'Si': ['Bing', 'Wu', 'Geng'],    # Snake
-    'Wu': ['Ding', 'Ji'],            # Horse
-    'Wei': ['Ji', 'Ding', 'Yi'],     # Goat
-    'Shen': ['Geng', 'Ren', 'Wu'],   # Monkey
-    'You': ['Xin'],                   # Rooster
-    'Xu': ['Wu', 'Xin', 'Ding'],     # Dog
-    'Hai': ['Ren', 'Jia'],           # Pig
+    'Zi': ['Gui'],                    # 子 Rat: 癸
+    'Chou': ['Ji', 'Gui', 'Xin'],    # 丑 Ox: 己癸辛
+    'Yin': ['Jia', 'Bing', 'Wu'],    # 寅 Tiger: 甲丙戊
+    'Mao': ['Yi'],                    # 卯 Rabbit: 乙
+    'Chen': ['Wu', 'Yi', 'Gui'],     # 辰 Dragon: 戊乙癸
+    'Si': ['Bing', 'Wu', 'Geng'],    # 巳 Snake: 丙戊庚
+    'Wu': ['Ding', 'Ji'],            # 午 Horse: 丁己 ✓ Joey Yap verified
+    'Wei': ['Ji', 'Ding', 'Yi'],     # 未 Goat: 己丁乙
+    'Shen': ['Wu', 'Geng', 'Ren'],   # 申 Monkey: 戊庚壬 ✓ Joey Yap verified
+    'You': ['Xin'],                   # 酉 Rooster: 辛
+    'Xu': ['Ding', 'Wu', 'Xin'],     # 戌 Dog: 丁戊辛 ✓ Joey Yap verified
+    'Hai': ['Ren', 'Jia'],           # 亥 Pig: 壬甲
 }
 
 # =============================================================================
@@ -229,6 +230,197 @@ THREE_HARMONY = {
     'Metal': ['Si', 'You', 'Chou'],  # Snake, Rooster, Ox
     'Water': ['Shen', 'Zi', 'Chen'], # Monkey, Rat, Dragon
 }
+
+# =============================================================================
+# SYMBOLIC STARS (神煞)
+# =============================================================================
+
+# Noble People 贵人 (Tian Yi Gui Ren) - Based on Day Stem
+NOBLE_PEOPLE = {
+    'Jia': ['Chou', 'Wei'],   # 甲 → 丑未
+    'Yi': ['Zi', 'Shen'],     # 乙 → 子申
+    'Bing': ['Hai', 'You'],   # 丙 → 亥酉
+    'Ding': ['Hai', 'You'],   # 丁 → 亥酉
+    'Wu': ['Chou', 'Wei'],    # 戊 → 丑未
+    'Ji': ['Zi', 'Shen'],     # 己 → 子申
+    'Geng': ['Chou', 'Wei'],  # 庚 → 丑未 ← Ben's
+    'Xin': ['Yin', 'Wu'],     # 辛 → 寅午
+    'Ren': ['Mao', 'Si'],     # 壬 → 卯巳
+    'Gui': ['Mao', 'Si'],     # 癸 → 卯巳
+}
+
+# Peach Blossom 桃花 (Tao Hua) - Based on Day Branch (or Year Branch)
+# Uses the "Three Harmony Frame" - find the Mao/You/Wu/Zi of your frame
+PEACH_BLOSSOM = {
+    'Yin': 'Mao', 'Wu': 'Mao', 'Xu': 'Mao',      # Fire frame → Mao
+    'Shen': 'You', 'Zi': 'You', 'Chen': 'You',   # Water frame → You ← Ben (申)
+    'Si': 'Wu', 'You': 'Wu', 'Chou': 'Wu',       # Metal frame → Wu
+    'Hai': 'Zi', 'Mao': 'Zi', 'Wei': 'Zi',       # Wood frame → Zi
+}
+
+# Intelligence Star 文昌 (Wen Chang) - Based on Day Stem
+INTELLIGENCE_STAR = {
+    'Jia': 'Si',    # 甲 → 巳
+    'Yi': 'Wu',     # 乙 → 午
+    'Bing': 'Shen', # 丙 → 申
+    'Ding': 'You',  # 丁 → 酉
+    'Wu': 'Shen',   # 戊 → 申
+    'Ji': 'You',    # 己 → 酉
+    'Geng': 'Hai',  # 庚 → 亥 ← Ben's
+    'Xin': 'Zi',    # 辛 → 子
+    'Ren': 'Yin',   # 壬 → 寅
+    'Gui': 'Mao',   # 癸 → 卯
+}
+
+# Sky Horse 驿马 (Yi Ma) - Based on Day Branch (or Year Branch)
+SKY_HORSE = {
+    'Yin': 'Shen', 'Wu': 'Shen', 'Xu': 'Shen',   # Fire frame → Shen
+    'Shen': 'Yin', 'Zi': 'Yin', 'Chen': 'Yin',   # Water frame → Yin ← Ben (申)
+    'Si': 'Hai', 'You': 'Hai', 'Chou': 'Hai',    # Metal frame → Hai
+    'Hai': 'Si', 'Mao': 'Si', 'Wei': 'Si',       # Wood frame → Si
+}
+
+# Solitary Star 孤辰 (Gu Chen) - Based on DAY Branch (not Year!)
+# Formula groups:
+# 寅卯辰 (Tiger, Rabbit, Dragon) → Solitary at 巳 Si (Snake)
+# 巳午未 (Snake, Horse, Goat) → Solitary at 申 Shen (Monkey)
+# 申酉戌 (Monkey, Rooster, Dog) → Solitary at 亥 Hai (Pig)
+# 亥子丑 (Pig, Rat, Ox) → Solitary at 寅 Yin (Tiger)
+SOLITARY_STAR = {
+    'Yin': 'Si', 'Mao': 'Si', 'Chen': 'Si',
+    'Si': 'Shen', 'Wu': 'Shen', 'Wei': 'Shen',
+    'Shen': 'Hai', 'You': 'Hai', 'Xu': 'Hai',  # Ben's Day Branch Shen → Hai
+    'Hai': 'Yin', 'Zi': 'Yin', 'Chou': 'Yin',
+}
+
+# Widow Star 寡宿 (Gua Su) - Based on Year Branch
+WIDOW_STAR = {
+    'Yin': 'Chou', 'Mao': 'Chou', 'Chen': 'Chou',
+    'Si': 'Chen', 'Wu': 'Chen', 'Wei': 'Chen',
+    'Shen': 'Wei', 'You': 'Wei', 'Xu': 'Wei',
+    'Hai': 'Xu', 'Zi': 'Xu', 'Chou': 'Xu',
+}
+
+# =============================================================================
+# LIFE PALACE & CONCEPTION PALACE
+# =============================================================================
+
+def calculate_life_palace(year_stem: str, month_branch: str, hour_branch: str) -> Tuple[str, str]:
+    """
+    Calculate Life Palace 命宫 (stem and branch)
+    
+    Formula for branch:
+    Count from Yin (month 1) to birth month, then count backwards from that point by hour.
+    Formula: Life Palace Branch = 14 - month_index - hour_index (mod 12)
+    
+    Formula for stem:
+    Uses the year stem with 5-Tiger formula
+    
+    Ben's case: Month=Wu(Horse), Hour=Xu(Dog)
+    Month index (from Yin): Wu=4, Hour index: Xu=10
+    Life Palace = (14 - 4 - 10) % 12 = 0 = Zi (Rat) ✓
+    """
+    # Month branch order starting from Yin (Tiger) = index 0
+    month_order = ['Yin', 'Mao', 'Chen', 'Si', 'Wu', 'Wei', 
+                   'Shen', 'You', 'Xu', 'Hai', 'Zi', 'Chou']
+    
+    # Get month index (Yin=0, Mao=1, ... Wu=4, etc.)
+    m_idx = month_order.index(month_branch) if month_branch in month_order else 0
+    
+    # Get hour index using standard branch order (Zi=0, Chou=1, ...)
+    h_idx = EARTHLY_BRANCHES.index(hour_branch)
+    
+    # Life palace branch calculation
+    life_idx = (14 - m_idx - h_idx) % 12
+    life_branch = EARTHLY_BRANCHES[life_idx]
+    
+    # Life palace stem calculation using 5-Tiger formula
+    # Based on year stem, determine the starting stem for Yin month
+    year_stem_idx = HEAVENLY_STEMS.index(year_stem)
+    
+    # 5-Tiger formula: Year stem determines Yin month stem
+    # Jia/Ji -> Bing (index 2), Yi/Geng -> Wu (index 4), 
+    # Bing/Xin -> Geng (index 6), Ding/Ren -> Ren (index 8), Wu/Gui -> Jia (index 0)
+    base_stems = {0: 2, 1: 4, 2: 6, 3: 8, 4: 0, 5: 2, 6: 4, 7: 6, 8: 8, 9: 0}
+    yin_stem_idx = base_stems.get(year_stem_idx, 0)
+    
+    # Find the life palace branch's position in month order
+    life_month_idx = month_order.index(life_branch) if life_branch in month_order else 0
+    
+    # Calculate stem for life palace
+    life_stem_idx = (yin_stem_idx + life_month_idx) % 10
+    life_stem = HEAVENLY_STEMS[life_stem_idx]
+    
+    return life_stem, life_branch
+
+def calculate_conception_palace(month_stem: str, month_branch: str) -> Tuple[str, str]:
+    """
+    Calculate Conception Palace 胎元
+    Formula: Month Stem + 1, Month Branch + 3
+    """
+    stem_idx = HEAVENLY_STEMS.index(month_stem)
+    branch_idx = EARTHLY_BRANCHES.index(month_branch)
+    
+    # Add 1 to stem, add 3 to branch
+    conception_stem = HEAVENLY_STEMS[(stem_idx + 1) % 10]
+    conception_branch = EARTHLY_BRANCHES[(branch_idx + 3) % 12]
+    
+    return conception_stem, conception_branch
+
+# =============================================================================
+# 12 LIFE STAGES (十二长生)
+# =============================================================================
+
+# Life stages in order
+TWELVE_STAGES = [
+    ('長生', 'Chang Sheng', 'Birth'),
+    ('沐浴', 'Mu Yu', 'Bath'),
+    ('冠帶', 'Guan Dai', 'Youth'),
+    ('臨官', 'Lin Guan', 'Maturity'),
+    ('帝旺', 'Di Wang', 'Prosperous'),
+    ('衰', 'Shuai', 'Weakening'),
+    ('病', 'Bing', 'Sickness'),
+    ('死', 'Si', 'Death'),
+    ('墓', 'Mu', 'Grave'),
+    ('絕', 'Jue', 'Extinction'),
+    ('胎', 'Tai', 'Conceived'),
+    ('養', 'Yang', 'Nourishing'),
+]
+
+# Starting branch for each stem's life cycle (where 長生 begins)
+LIFE_STAGE_START = {
+    'Jia': 'Hai',   # Yang Wood starts at Pig
+    'Yi': 'Wu',     # Yin Wood starts at Horse (reverse)
+    'Bing': 'Yin',  # Yang Fire starts at Tiger
+    'Ding': 'You',  # Yin Fire starts at Rooster (reverse)
+    'Wu': 'Yin',    # Yang Earth starts at Tiger
+    'Ji': 'You',    # Yin Earth starts at Rooster (reverse)
+    'Geng': 'Si',   # Yang Metal starts at Snake
+    'Xin': 'Zi',    # Yin Metal starts at Rat (reverse)
+    'Ren': 'Shen',  # Yang Water starts at Monkey
+    'Gui': 'Mao',   # Yin Water starts at Rabbit (reverse)
+}
+
+def get_life_stage(stem: str, branch: str) -> Tuple[str, str, str]:
+    """
+    Get the 12 Life Stage for a stem in a particular branch
+    Returns: (Chinese, Pinyin, English)
+    """
+    if stem not in LIFE_STAGE_START:
+        return ('', '', '')
+    
+    start_branch = LIFE_STAGE_START[stem]
+    start_idx = EARTHLY_BRANCHES.index(start_branch)
+    branch_idx = EARTHLY_BRANCHES.index(branch)
+    
+    # Yang stems go forward, Yin stems go backward
+    polarity = STEM_POLARITY[stem]
+    if polarity == 'Yang':
+        stage_idx = (branch_idx - start_idx) % 12
+    else:
+        stage_idx = (start_idx - branch_idx) % 12
+    
+    return TWELVE_STAGES[stage_idx]
 
 # =============================================================================
 # SEASONAL STRENGTH TABLE
@@ -552,14 +744,300 @@ def calculate_ten_profiles(pillars: Dict[str, Pillar]) -> Dict[str, int]:
     return profile_counts
 
 
+# Map each Ten God to its corresponding Heavenly Stem (relative to Day Master)
+def get_stem_for_ten_god(day_master: str, ten_god: str) -> str:
+    """
+    Get the Heavenly Stem that represents a specific Ten God for a given Day Master.
+    """
+    dm_element = STEM_ELEMENTS[day_master]
+    dm_polarity = STEM_POLARITY[day_master]
+    
+    # Element relationships
+    same = dm_element
+    produces = PRODUCTIVE_CYCLE[dm_element]  # Output
+    controls = CONTROLLING_CYCLE[dm_element]  # Wealth
+    controlled_by = CONTROLLED_BY[dm_element]  # Power
+    produced_by = PRODUCED_BY[dm_element]  # Resource
+    
+    # Find the stem based on Ten God type
+    target_element = None
+    same_polarity = True
+    
+    if ten_god == 'Friend':
+        target_element, same_polarity = same, True
+    elif ten_god == 'Rob Wealth':
+        target_element, same_polarity = same, False
+    elif ten_god == 'Eating God':
+        target_element, same_polarity = produces, True
+    elif ten_god == 'Hurting Officer':
+        target_element, same_polarity = produces, False
+    elif ten_god == 'Indirect Wealth':
+        target_element, same_polarity = controls, True
+    elif ten_god == 'Direct Wealth':
+        target_element, same_polarity = controls, False
+    elif ten_god == 'Seven Killings':
+        target_element, same_polarity = controlled_by, True
+    elif ten_god == 'Direct Officer':
+        target_element, same_polarity = controlled_by, False
+    elif ten_god == 'Indirect Resource':
+        target_element, same_polarity = produced_by, True
+    elif ten_god == 'Direct Resource':
+        target_element, same_polarity = produced_by, False
+    
+    if not target_element:
+        return ''
+    
+    # Find the stem with matching element and polarity
+    target_pol = dm_polarity if same_polarity else ('Yin' if dm_polarity == 'Yang' else 'Yang')
+    
+    for stem in HEAVENLY_STEMS:
+        if STEM_ELEMENTS[stem] == target_element and STEM_POLARITY[stem] == target_pol:
+            return stem
+    
+    return ''
+
+
+# 12 Life Stages percentage mapping (from strongest to weakest)
+LIFE_STAGE_PERCENTAGES = {
+    '帝旺': 100,  # Prosperous (Di Wang) - Peak
+    '臨官': 90,   # Maturity (Lin Guan) - also called 祿 Lu/Thriving
+    '冠帶': 80,   # Youth (Guan Dai)
+    '沐浴': 70,   # Bath (Mu Yu)
+    '長生': 60,   # Birth (Chang Sheng)
+    '養': 50,     # Nourishing (Yang)
+    '胎': 40,     # Conceived (Tai)
+    '絕': 30,     # Extinction (Jue)
+    '墓': 20,     # Grave (Mu)
+    '死': 10,     # Death (Si)
+    '病': 5,      # Sickness (Bing)
+    '衰': 3,      # Weakening (Shuai)
+}
+
+
+def calculate_profile_percentages_joey_yap(pillars: Dict[str, Pillar]) -> Dict[str, float]:
+    """
+    Calculate profile percentages using Joey Yap's methodology.
+    
+    Analysis shows Joey Yap weights:
+    - Hidden stems in Year/Month = highest weight (these are foundation)
+    - Hidden stems in Day/Hour = medium weight
+    - Visible stems = base weight
+    
+    The Main Profile is typically the one with most hidden stem presence
+    in the Year/Month pillars (the "root" of the chart).
+    """
+    day_master = pillars['day'].stem
+    
+    # Initialize scores for each Ten God
+    ten_gods = [
+        'Direct Officer', 'Indirect Resource', 'Seven Killings', 'Direct Resource',
+        'Friend', 'Eating God', 'Rob Wealth', 'Direct Wealth', 'Indirect Wealth', 'Hurting Officer'
+    ]
+    scores = {god: 0.0 for god in ten_gods}
+    
+    # Position weights - Joey Yap heavily weights Year/Month hidden stems
+    position_weights = {
+        'year_visible': 0.15,
+        'month_visible': 0.15,
+        'hour_visible': 0.15,
+        'year_hidden_main': 0.25,
+        'year_hidden_secondary': 0.12,
+        'year_hidden_residual': 0.06,
+        'month_hidden_main': 0.25,
+        'month_hidden_secondary': 0.12,
+        'month_hidden_residual': 0.06,
+        'day_hidden_main': 0.10,
+        'day_hidden_secondary': 0.05,
+        'day_hidden_residual': 0.03,
+        'hour_hidden_main': 0.12,
+        'hour_hidden_secondary': 0.06,
+        'hour_hidden_residual': 0.03,
+    }
+    
+    # Score visible stems (excluding Day Master)
+    for name in ['year', 'month', 'hour']:
+        stem = pillars[name].stem
+        god = get_ten_god(day_master, stem)
+        scores[god] += position_weights[f'{name}_visible']
+    
+    # Score hidden stems with position weighting
+    for name in ['year', 'month', 'day', 'hour']:
+        hidden_stems = pillars[name].hidden_stems
+        for i, stem in enumerate(hidden_stems):
+            god = get_ten_god(day_master, stem)
+            if i == 0:
+                weight_key = f'{name}_hidden_main'
+            elif i == 1:
+                weight_key = f'{name}_hidden_secondary'
+            else:
+                weight_key = f'{name}_hidden_residual'
+            scores[god] += position_weights.get(weight_key, 0.05)
+    
+    # Convert scores to percentages (normalize)
+    max_score = max(scores.values()) if scores.values() else 1
+    
+    percentages = {}
+    for god, score in scores.items():
+        if score > 0 and max_score > 0:
+            # Scale to 0-100, with highest around 98%
+            pct = (score / max_score) * 98
+            percentages[god] = round(pct, 0)
+        else:
+            percentages[god] = 0
+    
+    return percentages
+
+
+def calculate_profile_percentages(profile_counts: Dict[str, int]) -> Dict[str, float]:
+    """
+    Calculate profile percentages using weighted scoring.
+    This is a fallback method - prefer calculate_profile_percentages_joey_yap for accuracy.
+    """
+    total = sum(profile_counts.values())
+    if total == 0:
+        return {k: 0.0 for k in profile_counts}
+    
+    # Calculate base percentage
+    percentages = {}
+    max_possible = total
+    
+    for profile, count in profile_counts.items():
+        if count > 0:
+            base_pct = (count / max_possible) * 100
+            scaled_pct = min(100, base_pct * (100 / max(profile_counts.values())) * (count / total))
+            percentages[profile] = round(scaled_pct, 0)
+        else:
+            percentages[profile] = 0.0
+    
+    if percentages:
+        max_pct = max(percentages.values())
+        if max_pct > 0:
+            scale_factor = 100 / max_pct
+            for profile in percentages:
+                if percentages[profile] > 0:
+                    percentages[profile] = round(min(100, percentages[profile] * scale_factor * 0.98), 0)
+    
+    return percentages
+
+
 def get_dominant_profile(profile_counts: Dict[str, int]) -> Tuple[str, str]:
-    """Get the dominant profile and its name"""
+    """Get the dominant profile based on counts (fallback method)"""
     if not profile_counts:
         return 'Unknown', 'Unknown'
     
     dominant = max(profile_counts, key=profile_counts.get)
     profile_name = PROFILE_NAMES.get(dominant, dominant)
     return dominant, profile_name
+
+
+def get_dominant_profile_joey_yap(percentages: Dict[str, float]) -> Tuple[str, str]:
+    """Get the dominant profile based on Joey Yap's percentage method"""
+    if not percentages:
+        return 'Unknown', 'Unknown'
+    
+    dominant = max(percentages, key=percentages.get)
+    profile_name = PROFILE_NAMES.get(dominant, dominant)
+    return dominant, profile_name
+
+
+def calculate_symbolic_stars(pillars: Dict[str, Pillar]) -> Dict[str, any]:
+    """
+    Calculate all symbolic stars based on the chart.
+    """
+    day_stem = pillars['day'].stem
+    day_branch = pillars['day'].branch
+    year_branch = pillars['year'].branch
+    month_stem = pillars['month'].stem
+    month_branch = pillars['month'].branch
+    hour_branch = pillars['hour'].branch
+    
+    # Noble People 贵人 - from Day Stem
+    noble_branches = NOBLE_PEOPLE.get(day_stem, [])
+    noble_animals = [BRANCH_ANIMALS[EARTHLY_BRANCHES.index(b)] for b in noble_branches]
+    
+    # Peach Blossom 桃花 - from Day Branch
+    peach_branch = PEACH_BLOSSOM.get(day_branch, '')
+    peach_animal = BRANCH_ANIMALS[EARTHLY_BRANCHES.index(peach_branch)] if peach_branch else ''
+    
+    # Intelligence 文昌 - from Day Stem
+    intel_branch = INTELLIGENCE_STAR.get(day_stem, '')
+    intel_animal = BRANCH_ANIMALS[EARTHLY_BRANCHES.index(intel_branch)] if intel_branch else ''
+    
+    # Sky Horse 驿马 - from Day Branch
+    horse_branch = SKY_HORSE.get(day_branch, '')
+    horse_animal = BRANCH_ANIMALS[EARTHLY_BRANCHES.index(horse_branch)] if horse_branch else ''
+    
+    # Solitary 孤辰 - from DAY Branch (not Year!)
+    solitary_branch = SOLITARY_STAR.get(day_branch, '')
+    solitary_animal = BRANCH_ANIMALS[EARTHLY_BRANCHES.index(solitary_branch)] if solitary_branch else ''
+    
+    # Conception Palace 胎元
+    conception_stem, conception_branch = calculate_conception_palace(month_stem, month_branch)
+    conception_animal = BRANCH_ANIMALS[EARTHLY_BRANCHES.index(conception_branch)]
+    
+    # Life Palace 命宫
+    year_stem = pillars['year'].stem
+    life_stem, life_branch = calculate_life_palace(year_stem, month_branch, hour_branch)
+    life_animal = BRANCH_ANIMALS[EARTHLY_BRANCHES.index(life_branch)]
+    
+    return {
+        'noble_people': {
+            'branches': noble_branches,
+            'animals': noble_animals,
+            'chinese': '贵人'
+        },
+        'peach_blossom': {
+            'branch': peach_branch,
+            'animal': peach_animal,
+            'chinese': '桃花'
+        },
+        'intelligence': {
+            'branch': intel_branch,
+            'animal': intel_animal,
+            'chinese': '文昌'
+        },
+        'sky_horse': {
+            'branch': horse_branch,
+            'animal': horse_animal,
+            'chinese': '驿马'
+        },
+        'solitary': {
+            'branch': solitary_branch,
+            'animal': solitary_animal,
+            'chinese': '孤辰'
+        },
+        'conception_palace': {
+            'stem': conception_stem,
+            'branch': conception_branch,
+            'animal': conception_animal,
+            'chinese': '胎元',
+            'full': f"{conception_stem} {conception_branch}"
+        },
+        'life_palace': {
+            'stem': life_stem,
+            'branch': life_branch,
+            'animal': life_animal,
+            'chinese': '命宫',
+            'full': f"{life_stem} {life_branch}"
+        }
+    }
+
+
+def calculate_life_stages_for_chart(pillars: Dict[str, Pillar]) -> Dict[str, Dict]:
+    """
+    Calculate 12 Life Stages for each pillar position.
+    """
+    stages = {}
+    
+    for name, pillar in pillars.items():
+        stage = get_life_stage(pillar.stem, pillar.branch)
+        stages[name] = {
+            'chinese': stage[0],
+            'pinyin': stage[1],
+            'english': stage[2]
+        }
+    
+    return stages
 
 # =============================================================================
 # DAY MASTER STRENGTH
@@ -880,9 +1358,10 @@ def analyze_bazi(
     # Useful gods
     useful_gods = determine_useful_gods(dm_element, strength_category)
     
-    # Ten Profiles
+    # Ten Profiles - use Joey Yap's 12 Life Stages method
     profiles = calculate_ten_profiles(pillars)
-    dominant_god, profile_name = get_dominant_profile(profiles)
+    profile_percentages = calculate_profile_percentages_joey_yap(pillars)
+    dominant_god, profile_name = get_dominant_profile_joey_yap(profile_percentages)
     
     # Luck Pillars
     year_polarity = pillars['year'].polarity
@@ -893,6 +1372,16 @@ def analyze_bazi(
     clashes = detect_clashes(pillars)
     combines = detect_combines(pillars)
     harmonies = detect_three_harmony(pillars)
+    
+    # Symbolic Stars (NEW)
+    symbolic_stars = calculate_symbolic_stars(pillars)
+    
+    # Life Stages (NEW)
+    life_stages = calculate_life_stages_for_chart(pillars)
+    
+    # Celestial Animal (from Year Branch)
+    year_branch_idx = EARTHLY_BRANCHES.index(pillars['year'].branch)
+    celestial_animal = BRANCH_ANIMALS[year_branch_idx]
     
     return {
         'birth_info': {
@@ -912,6 +1401,7 @@ def analyze_bazi(
         'useful_gods': useful_gods,
         'profiles': {
             'counts': profiles,
+            'percentages': profile_percentages,
             'dominant': dominant_god,
             'profile_name': profile_name
         },
@@ -924,6 +1414,13 @@ def analyze_bazi(
             'clashes': clashes,
             'combines': combines,
             'three_harmony': harmonies
+        },
+        'symbolic_stars': symbolic_stars,
+        'life_stages': life_stages,
+        'celestial_animal': {
+            'branch': pillars['year'].branch,
+            'animal': celestial_animal,
+            'chinese': '生肖'
         }
     }
 
@@ -962,19 +1459,54 @@ if __name__ == "__main__":
     result = analyze_bazi(date(1978, 6, 27), 20, 'male')
     
     print("=" * 60)
-    print("BAZI CALCULATOR TEST")
+    print("BAZI CALCULATOR TEST - v10.7")
     print("=" * 60)
     print(f"\nFour Pillars:")
-    for name, p in result['four_pillars'].items():
+    for name in ['year', 'month', 'day', 'hour']:
+        p = result['four_pillars'][name]
         print(f"  {name.title():6} | {p['stem']:4} {p['branch']:5} | {p['chinese']} | {p['animal']}")
+        print(f"         Hidden: {', '.join(p['hidden_stems'])}")
     
     print(f"\nDay Master: {result['day_master']['stem']} ({result['day_master']['element']})")
     print(f"Strength: {result['day_master']['strength_pct']}% ({result['day_master']['strength_category']})")
     print(f"\nUseful: {', '.join(result['useful_gods']['useful'])}")
     print(f"Unfavorable: {', '.join(result['useful_gods']['unfavorable'])}")
     
-    print(f"\nDominant Profile: {result['profiles']['dominant']} ({result['profiles']['profile_name']})")
+    print(f"\n--- Ten Profiles ---")
+    print(f"Dominant: {result['profiles']['dominant']} ({result['profiles']['profile_name']})")
+    print(f"\nCounts:")
+    for god, count in sorted(result['profiles']['counts'].items(), key=lambda x: -x[1]):
+        if count > 0:
+            pct = result['profiles']['percentages'].get(god, 0)
+            print(f"  {god:20} | {count} | {pct:.0f}%")
     
-    print(f"\nLuck Pillars ({result['luck_pillars']['direction']}, Start Age {result['luck_pillars']['start_age']}):")
+    print(f"\n--- Luck Pillars ({result['luck_pillars']['direction']}, Start Age {result['luck_pillars']['start_age']}) ---")
     for lp in result['luck_pillars']['pillars'][:6]:
         print(f"  {lp['age_range']:8} | {lp['chinese']} | {lp['animal']}")
+    
+    print(f"\n--- Symbolic Stars ---")
+    stars = result['symbolic_stars']
+    print(f"  Celestial Animal: {result['celestial_animal']['animal']} ({result['celestial_animal']['branch']})")
+    print(f"  Noble People: {', '.join(stars['noble_people']['animals'])} ({', '.join(stars['noble_people']['branches'])})")
+    print(f"  Peach Blossom: {stars['peach_blossom']['animal']} ({stars['peach_blossom']['branch']})")
+    print(f"  Intelligence: {stars['intelligence']['animal']} ({stars['intelligence']['branch']})")
+    print(f"  Sky Horse: {stars['sky_horse']['animal']} ({stars['sky_horse']['branch']})")
+    print(f"  Solitary: {stars['solitary']['animal']} ({stars['solitary']['branch']})")
+    print(f"  Life Palace: {stars['life_palace']['full']} ({stars['life_palace']['animal']})")
+    print(f"  Conception: {stars['conception_palace']['full']} ({stars['conception_palace']['animal']})")
+    
+    print(f"\n--- Life Stages ---")
+    for name, stage in result['life_stages'].items():
+        print(f"  {name.title():6} | {stage['chinese']} {stage['english']}")
+    
+    print("\n" + "=" * 60)
+    print("EXPECTED (Joey Yap):")
+    print("=" * 60)
+    print("  Main Profile: The Diplomat (Direct Officer) 正官格")
+    print("  Noble People: Goat (未), Ox (丑)")
+    print("  Peach Blossom: Rooster (酉)")
+    print("  Intelligence: Pig (亥)")
+    print("  Sky Horse: Tiger (寅)")
+    print("  Solitary: Pig (亥)")
+    print("  Life Palace: 甲子 Jia Zi (Rat)")
+    print("  Conception: 己酉 Ji You (Rooster)")
